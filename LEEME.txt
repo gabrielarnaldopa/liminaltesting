@@ -1,0 +1,26 @@
+LIMINAL COMO APP WEB (PWA)
+
+1. En github.com toca + › New repository. Nombre: liminal-web. Marca Public y toca Create repository.
+2. Toca "uploading an existing file" y arrastra TODO lo que hay dentro de esta carpeta
+   (index.html, manifest.webmanifest, sw.js y las carpetas icons y lib). Toca Commit changes.
+3. Ve a Settings › Pages. En Branch elige main y / (root). Toca Save.
+4. Espera 1 o 2 minutos. Tu app queda en: https://TU-USUARIO.github.io/liminal-web/
+5. En el iPhone, abre ese enlace en Safari › Compartir › Agregar a pantalla de inicio.
+   Se abre en pantalla completa, con el logo de Liminal, y funciona sin internet después de la primera vez.
+
+Los chats y ajustes se guardan solo en tu teléfono.
+
+La carpeta lib trae las bibliotecas abiertas que leen PDF y Word y crean los archivos PDF y Word. Sus licencias están en lib/LICENCIAS.txt.
+
+CONVERSACIÓN EN VIVO
+- Con el chat vacío, toca el botón de ondas (abajo a la derecha) y habla. Cuando haces una pausa, Lithium responde en voz alta.
+- La primera vez el navegador pide permiso para el micrófono.
+- Si tu navegador no convierte la voz en texto, puedes escribir y Lithium te responde igual en voz alta.
+- Si sales de un chat mientras Lithium crea una imagen, un video o una respuesta larga, ves el avance arriba en una cápsula negra.
+  En la app de iPhone (.ipa) eso aparece en la Isla Dinámica real y en la pantalla bloqueada.
+
+RESPUESTAS REALES CON DEEPSEEK
+- La clave de DeepSeek va en el servidor de Lithium (Liminal-Servidor.zip), nunca en la app. Sigue su LEEME.md.
+- Luego, en la app: Administración › Planes › Servidor de Lithium 1.1. Pega la dirección del servidor y la clave de la app,
+  toca Probar conexión y Guardar cambios. Desde ahí las respuestas son reales.
+- La vista previa dentro de claude.ai no puede llamar a tu servidor: prueba con la app publicada en GitHub Pages.

@@ -1,0 +1,5 @@
+Bibliotecas abiertas incluidas en esta carpeta:
+- pdf.js 3.11.174 (Mozilla) · Apache License 2.0 · lee PDF
+- mammoth 1.8.0 · BSD 2-Clause · lee documentos de Word
+- jsPDF 2.5.2 · MIT · crea PDF
+- JSZip 3.10.1 · MIT · crea documentos de Word
