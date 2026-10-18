@@ -24,3 +24,12 @@ RESPUESTAS REALES CON DEEPSEEK
 - Luego, en la app: Administración › Planes › Servidor de Lithium 1.1. Pega la dirección del servidor y la clave de la app,
   toca Probar conexión y Guardar cambios. Desde ahí las respuestas son reales.
 - La vista previa dentro de claude.ai no puede llamar a tu servidor: prueba con la app publicada en GitHub Pages.
+
+DOCUMENTOS EN WORD Y PDF
+- Pídele a Lithium "hazme un Word sobre…" o "un PDF de…". Escribe el documento completo y debajo aparece una tarjeta
+  con los botones Word, PDF y Editar. Necesita el worker.js nuevo en Cloudflare (ver LEEME.md del servidor).
+
+
+NOVEDAD: LIMINAL DEV
+En la barra lateral está «Liminal Dev» (o escribe /dev en el chat). Es un modo de programación: creas o importas un proyecto (ZIP o GitHub), le pides algo a Lithium y él lee los archivos, los edita, ejecuta JavaScript o Python, revisa la vista previa y corrige errores hasta que funcione. Los proyectos se guardan en el navegador de cada dispositivo; exporta un ZIP para pasarlos a otro lado. Cada tarea se puede deshacer.
+Para que programe de verdad necesita el servidor actualizado (worker.js nuevo). Sin servidor sigue un guion de demostración.

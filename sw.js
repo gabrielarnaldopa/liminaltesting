@@ -1,5 +1,5 @@
 // Liminal: keeps the app working without internet after the first visit.
-const CACHE = 'liminal-v14';
+const CACHE = 'liminal-v19';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png',
   './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 
