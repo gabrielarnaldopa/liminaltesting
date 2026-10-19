@@ -342,9 +342,15 @@ button{background:none;border:0;cursor:pointer;padding:0;text-align:inherit}
 .think[open] summary .chev-rot{transform:rotate(90deg)}
 .think-body{padding:0 14px 12px 38px;display:flex;flex-direction:column;gap:6px;color:var(--ink-3)}
 .thinking-live{display:flex;align-items:center;gap:10px;font-size:.9em;color:var(--ink-2)}
-.pulse{width:10px;height:10px;border-radius:50%;background:var(--yellow);animation:pulse 1.1s ease-in-out infinite}
-@keyframes pulse{0%,100%{transform:scale(.7);opacity:.5}50%{transform:scale(1);opacity:1}}
-@media (prefers-reduced-motion:reduce){.pulse,.caret{animation:none}}
+/* Loading: three gray dots that rise in turn, and the text a soft gray shine passes over, like Claude */
+.pulse{display:inline-flex;align-items:center;justify-content:center;gap:3px;flex:none;height:12px;color:var(--ink-3)}
+.pulse i{flex:none;width:4.5px;height:4.5px;border-radius:50%;background:currentColor;opacity:.4;animation:lmdot 1.2s ease-in-out infinite}
+.pulse i:nth-child(2){animation-delay:.16s}.pulse i:nth-child(3){animation-delay:.32s}
+.thinking-live .pulse{gap:4px}.thinking-live .pulse i{width:6px;height:6px}
+@keyframes lmdot{0%,70%,100%{opacity:.4;transform:translateY(0)}35%{opacity:1;transform:translateY(-3px)}}
+.shimmer,.tool-step.start>.t,.tool-step.start>button{background:linear-gradient(90deg,var(--ink-3) 0%,var(--ink-3) 38%,var(--ink) 50%,var(--ink-3) 62%,var(--ink-3) 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:lmshine 2.2s linear infinite}
+@keyframes lmshine{from{background-position:100% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.pulse i,.caret,.shimmer,.tool-step.start>.t,.tool-step.start>button{animation:none}.pulse i{opacity:.7}.shimmer,.tool-step.start>.t,.tool-step.start>button{background:none;color:var(--ink-2);-webkit-text-fill-color:currentColor}}
 
 /* Project */
 .project{flex:1;min-height:0}
@@ -698,7 +704,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:.88em;font-variant-numer
 .tool-step button{color:var(--ink-2)}
 .tool-step button:hover{color:var(--ink);text-decoration:underline}
 .tool-step .ic{flex:none;color:var(--ink-3)}
-.tool-step .pulse{width:8px;height:8px;flex:none;margin:0 3px}
+.tool-step .pulse{flex:none;margin:0 2px}
 .tool-step.denied,.tool-step.error{color:var(--ink-3)}
 .ask-card{margin:6px 0 12px;padding:14px;border:1px solid var(--line-2);border-radius:14px;background:var(--raised);display:flex;flex-direction:column;gap:6px}
 .ask-card p{margin:0}
@@ -932,7 +938,7 @@ button.ld-line-h:hover{background:var(--hover);color:var(--ink)}
 .sb-switch button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;border-radius:8px;font-size:.88em;color:var(--ink-2);font-weight:500}
 .sb-switch button:hover{color:var(--ink)}
 .sb-switch button[aria-selected="true"]{background:var(--seg-on);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
-.sb-item .pulse{margin-left:auto;width:8px;height:8px}
+.sb-item .pulse{margin-left:auto}
 @media (max-width:860px){.ld-mtabs button{padding:7px 4px}}
 /* cleaner sidebar: the shortcut shows only on hover */
 .new-chat kbd{opacity:0;transition:opacity .15s}.new-chat:hover kbd,.new-chat:focus-visible kbd{opacity:1}
@@ -1190,7 +1196,7 @@ const BANKS=['Banco de Venezuela','Banesco','Mercantil','BBVA Provincial','BNC',
 const CRYPTO_NETS={usdt:[['tron','Tron (TRC-20)'],['solana','Solana']],usdc:[['base','Base'],['solana','Solana']]};
 const creditWord=n=>n===1?'crédito':'créditos';
 const ADV={
- deepseek:{name:'DeepSeek V4 Pro',note:'Principal: razonamiento y calidad.'},
+ deepseek:{name:'DeepSeek V4.1 Flash',note:'Principal: programa, razona y busca; Avanzado piensa más.'},
  qwen:{name:'Qwen 3.6',note:'Respaldo: fuerte en español.'},
  glm:{name:'GLM-5.2',note:'Respaldo: razonamientos largos.'}
 };
@@ -1200,7 +1206,7 @@ const EFF={
  alto:{name:'Alto',ms:3200,secs:6,note:'Razona a fondo. Cuenta doble en tu ventana de 5 horas.'}
 };
 const COLORS=['#28C840','#FEBC2E','#FF5F57','#8E8E93','#636366','#AEAEB2'];
-const COST_PER_M=0.91; /* DeepSeek V4 Pro since 16 Aug 2026, with cache and 85% off-peak use */
+const COST_PER_M=0.25; /* DeepSeek V4.1 Flash (October 2026), with cache and 85% off-peak use */
 const SET_TABS=[['general','General','user'],['apariencia','Apariencia','contrast'],['modelos','Modelos y modos','gauge'],['navegacion','Navegación','globe'],['voz','Voz y avisos','wave'],['memoria','Memoria','brain'],['conectores','Conectores','plug'],['privacidad','Privacidad','shield'],['plan','Plan y pagos','wallet'],['puntos','Puntos de fundador','star'],['cuenta','Cuenta','door']];
 const ADMIN_TABS=[['resumen','Resumen'],['usuarios','Usuarios'],['planes','Planes y límites'],['pagos','Pagos']];
 const ST={activo:['g','Activo'],vence:['y','Por vencer'],suspendido:['r','Suspendido'],confirmado:['g','Confirmado'],pendiente:['y','Pendiente'],fallido:['r','Fallido'],ok:['g','Operativo'],lento:['y','Lento'],caido:['r','Interrumpido']};
@@ -1336,7 +1342,7 @@ function checkUsage(){const u=S.usage,t=Date.now();if(u.sessUsd==null){const l=l
    it read (new, or reused from the cache) and wrote, reasoning included. They are priced at the engine's real
    rates (half price off-peak) and fill two meters: the current 5-hour session and the week. Fast costs about
    ten times less, so it barely moves them, and it keeps working when a session runs out. */
-const PRICES={adv:{hit:0.044,miss:1.32,out:3.96},fast:{hit:0.006,miss:0.3,out:1.2}}; // USD per 1M tokens at peak hours (October 2026); off-peak costs half
+const PRICES={adv:{hit:0.006,miss:0.3,out:1.2},fast:{hit:0.006,miss:0.3,out:1.2}}; // USD per 1M tokens at peak hours (DeepSeek V4.1 Flash, October 2026; both modes use it, Advanced thinks more); off-peak costs half
 const offPeak=ts=>{const d=new Date(ts),h=d.getUTCHours(),w=d.getUTCDay();return !(w>=1&&w<=5&&((h>=1&&h<4)||(h>=6&&h<10)));};
 function tokenCost(tok,tier,ts){const p=PRICES[tier==='adv'?'adv':'fast'],k=offPeak(ts||Date.now())?.5:1,inp=Math.max(0,tok.in||0),hit=Math.min(inp,Math.max(0,tok.cached||0));return((inp-hit)*p.miss+hit*p.hit+Math.max(0,tok.out||0)*p.out)/1e6*k+((tok.vin||0)*0.2+(tok.vout||0)*1.6)/1e6;} // photos: the seeing engine, about $0.20 / $1.60 per 1M tokens
 const LIMITS_DEFAULT={session:0.25,week:1}; // USD of compute: the 5-hour session and the week
@@ -1446,7 +1452,12 @@ const plainMd=t=>String(t).replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*\n]+)
 const isRow=t=>/^\|.*\|$/.test(t);
 const isSep=t=>/^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?$/.test(t);
 const cellsOf=t=>t.replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
-function docOf(text){const t=String(text||'').replace(/^\s+/,'');const m=t.match(/^#\s+(.+)\n?/);if(!m)return null;const title=plainMd(m[1]).trim();if(!title)return null;const body=t.slice(m[0].length);return{title,body,words:(body.replace(/[|#*>-]/g,' ').match(/\S+/g)||[]).length};}
+function docOf(text){let t=String(text||'').replace(/^\s+/,'');const at=t.search(/(^|\n)#\s+\S/);if(at<0||at>600)return null;if(at>0){t=t.slice(at).replace(/^\n/,'');const words=(t.match(/\S+/g)||[]).length;if(words<60)return null;}const m=t.match(/^#\s+(.+)\n?/);if(!m)return null;const title=plainMd(m[1]).trim();if(!title)return null;const body=t.slice(m[0].length);return{title,body,words:(body.replace(/[|#*>-]/g,' ').match(/\S+/g)||[]).length};}
+/** The person asked for a PDF or a Word file: if this answer isn't the document, offer the last one that is. */
+function askedFile(c,i){const u=c.messages[i-1];return !!(u&&u.role==='user'&&/\b(pdf|word|docx|documento|archivo|desc[aá]rga|descargar)\b/i.test(u.text||''));}
+function prevDocCard(c,i){for(let k=i-1;k>=0;k--){const m=c.messages[k];if(m.role==='bot'&&docOf(m.text))return docCardHTML(docOf(m.text),k,c,c.messages[i-1].text);}return '';}
+/** The document itself, without a sentence the answer may put before the title. */
+function docSource(text){const t=String(text||'').replace(/^\s+/,'');const at=t.search(/(^|\n)#\s+\S/);return at>0&&docOf(t)?t.slice(at).replace(/^\n/,''):t;}
 function docParts(blocks,title){return blocks[0]&&blocks[0].t==='h'&&blocks[0].lv===1?{title:blocks[0].x,blocks:blocks.slice(1),doc:true}:{title,blocks,doc:false};}
 function blocksFromMd(src){
  const L=String(src).replace(/\r/g,'').split('\n'),out=[];
@@ -1522,8 +1533,8 @@ async function exportDOCX(all,fallback){
  zip.file('word/document.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`);
  await download(await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}),fileBase(title)+'.docx');
 }
-function docCardHTML(d,i,c){
- const prev=c.messages[i-1],asked=prev&&prev.role==='user'?prev.text||'':'';
+function docCardHTML(d,i,c,ask){
+ const prev=c.messages[i-1],asked=ask!=null?ask:prev&&prev.role==='user'?prev.text||'':'';
  const pdfFirst=/\bpdf\b/i.test(asked)&&!/\bword\b|docx/i.test(asked);
  const b=(fmt,primary)=>`<button class="btn sm${primary?' primary':''}" data-action="doc-dl" data-i="${i}" data-val="${fmt}">${ic('download','sm')}${fmt==='pdf'?'PDF':'Word'}</button>`;
  return `<div class="doc-card"><span class="doc-ic">${ic('file')}</span><span class="doc-t"><b>${esc(d.title)}</b><span>Documento · ${nf(d.words)} palabras</span></span><div class="doc-btns">${pdfFirst?b('pdf',true)+b('docx'):b('docx',true)+b('pdf')}<button class="btn sm" data-action="open-editor" data-val="${i}">${ic('edit','sm')}Editar</button></div></div>`;
@@ -1855,7 +1866,7 @@ function renderSidebar(){
   <button class="icon-btn sb-collapse" data-action="toggle-sidebar" aria-label="Ocultar barra lateral">${ic('sidebar')}</button>
   <button class="icon-btn sb-close" data-action="close-sidebar" aria-label="Cerrar menú">${ic('x')}</button>
  </div>
- <div class="sb-switch" role="tablist" aria-label="Sección"><button role="tab" aria-selected="${U.view!=='dev'}" data-action="section-chat">${ic('chat','sm')}Chat</button><button role="tab" aria-selected="${U.view==='dev'}" data-action="open-dev">${ic('code','sm')}Dev${LD.running&&U.view!=='dev'?'<span class="pulse"></span>':''}</button></div>
+ <div class="sb-switch" role="tablist" aria-label="Sección"><button role="tab" aria-selected="${U.view!=='dev'}" data-action="section-chat">${ic('chat','sm')}Chat</button><button role="tab" aria-selected="${U.view==='dev'}" data-action="open-dev">${ic('code','sm')}Dev${LD.running&&U.view!=='dev'?'<span class="pulse"><i></i><i></i><i></i></span>':''}</button></div>
  ${U.view==='dev'?ldSideHTML():` <button class="new-chat" data-action="new-chat">${ic('compose')}<span>Nuevo chat</span><kbd>Ctrl ⇧ O</kbd></button>
  <button class="sb-search" data-action="open-search">${ic('search')}<span>Buscar chats</span></button>
  ${isAdmin()?`<button class="sb-search ${U.view==='admin'?'active':''}" data-action="open-admin" ${U.view==='admin'?'aria-current="page"':''}>${ic('shield')}<span>Administración</span></button>`:''}
@@ -1955,15 +1966,15 @@ function msgHTML(m,i,c){
  const isLast=i===c.messages.length-1;
  if(m.kind){
   const spec=CREATE[m.kind];
-  const body=m.pending?`<div class="thinking-live"><span class="pulse"></span>${spec.pending}</div>`:`<div class="md"><p>${esc(m.text)}</p></div>${m.stopped?'':mediaHTML(m)}`;
+  const body=m.pending?`<div class="thinking-live"><span class="pulse"><i></i><i></i><i></i></span><span class="shimmer">${spec.pending}</span></div>`:`<div class="md"><p>${esc(m.text)}</p></div>${m.stopped?'':mediaHTML(m)}`;
   const acts=m.pending||m.stopped?'':`<div class="msg-actions"><button class="act" data-action="dl-media" aria-label="Descargar">${ic('download','sm')}</button><button class="act" data-action="copy-msg" data-i="${i}" aria-label="Copiar la descripción">${ic('copy','sm')}</button>${isLast?`<button class="act" data-action="regen" aria-label="Crear otra versión">${ic('refresh','sm')}</button>`:''}</div>`;
   return `<div class="msg bot" data-i="${i}"><div class="bot-head">${mark()}<b>${MODEL_NAME}</b><span>${esc(spec.name)} · ${spec.credits} ${creditWord(spec.credits)}</span></div>${body}${acts}</div>`;
  }
  let think='';
- if(m.pending)think=`<div class="thinking-live"><span class="pulse"></span>${m.web?'Buscando en internet…':m.reading?'Leyendo tus archivos…':m.tier==='adv'?`Pensando con esfuerzo ${EFF[m.effort].name.toLowerCase()}…`:'Escribiendo…'}</div>`;
+ if(m.pending)think=`<div class="thinking-live"><span class="pulse"><i></i><i></i><i></i></span><span class="shimmer">${m.web?'Buscando en internet…':m.reading?'Leyendo tus archivos…':m.tier==='adv'?`Pensando con esfuerzo ${EFF[m.effort].name.toLowerCase()}…`:'Escribiendo…'}</span></div>`;
  else if(m.thinking&&S.prefs.showThinking)think=`<details class="think"><summary>${ic('brain','sm')}Razonó durante ${m.thinking} s${ic('chevr','xs chev-rot')}</summary><div class="think-body">${(m.thought||[]).map(t=>`<span>${esc(t)}</span>`).join('')}</div></details>`;
  const actions=(!m.pending&&!m.streaming)?`<div class="msg-actions"><button class="act" data-action="copy-msg" data-i="${i}" aria-label="Copiar respuesta">${ic('copy','sm')}</button><button class="act" data-action="export-menu" data-i="${i}" aria-haspopup="true" aria-label="Exportar o editar">${ic('download','sm')}</button>${isLast?`<button class="act" data-action="regen" aria-label="Volver a generar">${ic('refresh','sm')}</button>`:''}<button class="act up ${m.fb==='up'?'on':''}" data-action="fb" data-i="${i}" data-val="up" aria-label="Buena respuesta" aria-pressed="${m.fb==='up'}">${ic('thumb','sm')}</button><button class="act down ${m.fb==='down'?'on':''}" data-action="fb" data-i="${i}" data-val="down" aria-label="Mala respuesta" aria-pressed="${m.fb==='down'}">${ic('thumb','sm flip')}</button></div>`:'';
- return `<div class="msg bot" data-i="${i}"><div class="bot-head">${mark()}<b>${MODEL_NAME}</b><span>${esc(metaOf(m))}</span>${m.edited?'<span class="edited-tag">· editado</span>':''}</div>${think}${m.reconnecting?'<div class="thinking-live"><span class="pulse"></span>Reconectando…</div>':''}${toolsHTML(m)}${m.pending?'':`<div class="md">${md(m.text,{i,n:0,streaming:!!m.streaming})}${m.streaming?'<span class="caret" aria-hidden="true"></span>':''}</div>`}${m.ask&&!m.streaming?askHTML(m,i):''}${m.notice&&!m.streaming?`<div class="cut-note">${ic('refresh','sm')}<span>${esc(m.notice)}</span>${isLast&&(!m.noticeKind||m.noticeKind==='cut')?'<button class="btn sm" data-action="continue-answer">Continuar</button>':''}</div>`:''}${!m.pending&&!m.streaming?sourcesHTML(m):''}${!m.pending&&!m.streaming&&!m.stopped&&docOf(m.text)?docCardHTML(docOf(m.text),i,c):''}${!m.pending&&!m.streaming&&m.memNew?`<div class="mem-chip">${ic('brain','sm')}<span>Memoria actualizada: «${esc(m.memNew.text)}»</span><button class="link-btn" data-action="undo-mem" data-i="${i}">Deshacer</button></div>`:''}${actions}</div>`;
+ return `<div class="msg bot" data-i="${i}"><div class="bot-head">${mark()}<b>${MODEL_NAME}</b><span>${esc(metaOf(m))}</span>${m.edited?'<span class="edited-tag">· editado</span>':''}</div>${think}${m.reconnecting?'<div class="thinking-live"><span class="pulse"><i></i><i></i><i></i></span><span class="shimmer">Reconectando…</span></div>':''}${toolsHTML(m)}${m.pending?'':`<div class="md">${md(m.text,{i,n:0,streaming:!!m.streaming})}${m.streaming?'<span class="caret" aria-hidden="true"></span>':''}</div>`}${m.ask&&!m.streaming?askHTML(m,i):''}${m.notice&&!m.streaming?`<div class="cut-note">${ic('refresh','sm')}<span>${esc(m.notice)}</span>${isLast&&(!m.noticeKind||m.noticeKind==='cut')?'<button class="btn sm" data-action="continue-answer">Continuar</button>':''}</div>`:''}${!m.pending&&!m.streaming?sourcesHTML(m):''}${!m.pending&&!m.streaming&&!m.stopped?(docOf(m.text)?docCardHTML(docOf(m.text),i,c):askedFile(c,i)?prevDocCard(c,i):''):''}${!m.pending&&!m.streaming&&m.memNew?`<div class="mem-chip">${ic('brain','sm')}<span>Memoria actualizada: «${esc(m.memNew.text)}»</span><button class="link-btn" data-action="undo-mem" data-i="${i}">Deshacer</button></div>`:''}${actions}</div>`;
 }
 function renderChat(){
  const c=curChat();if(!c){U.view='home';return renderHome();}
@@ -2024,7 +2035,7 @@ function adminSummary(){
   </section>
   <section class="panel"><div class="panel-h"><h3>Economía por suscriptor</h3></div>
    <div class="calc"><span>Presupuesto de cómputo al mes</span><b>${money(Math.round(budget(a)*100)/100)}</b><span>Plan de ${money(a.priceMonthly)} con margen del ${a.margin}%</span></div>
-   <div class="calc"><span>Tokens que alcanza con DeepSeek V4 Pro</span><b>${(budget(a)/COST_PER_M).toLocaleString('es',{maximumFractionDigits:1})} M</b><span>A unos $0,91 por millón: precios de DeepSeek desde agosto de 2026, con caché y horario barato</span></div>
+   <div class="calc"><span>Tokens que alcanza con DeepSeek V4.1 Flash</span><b>${(budget(a)/COST_PER_M).toLocaleString('es',{maximumFractionDigits:1})} M</b><span>A unos $0,25 por millón: precios de DeepSeek V4.1 Flash (octubre de 2026), con caché y horario barato</span></div>
    <button class="btn sm" data-action="admin-tab" data-val="planes" style="align-self:flex-start">Ajustar planes y límites</button>
   </section>
  </div>`;
@@ -2358,7 +2369,7 @@ function runAnswer(c,idx,bot,opts,url,init){
  const t0=Date.now();let think='',queued=false,failed=null,started=!bot.pending,saved=Date.now(),gotDone=false;
  // A connection that goes silent for too long counts as dropped (the server sends a sign of life every 15 s).
  const inner=new AbortController();ctrl.signal.addEventListener('abort',()=>inner.abort(),{once:true});
- let stall=null;const bump=()=>{clearTimeout(stall);stall=setTimeout(()=>inner.abort(),90000);};bump();
+ let stall=null;const bump=()=>{clearTimeout(stall);stall=setTimeout(()=>inner.abort(),150000);};bump();
  saveNow();
  const paint=()=>{if(Date.now()-saved>3000){saved=Date.now();save();}if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;updateMsg(c,idx);});};
  const begin=()=>{if(started)return;started=true;bot.pending=false;bot.reading=false;bot.streaming=true;bot.thinking=opts.tier==='adv'&&think?Math.max(1,Math.round((Date.now()-t0)/1000)):(bot.thinking||0);if(opts.tracked)islaSet('Escribiendo la respuesta');};
@@ -2397,7 +2408,7 @@ function runAnswer(c,idx,bot,opts,url,init){
   if(!gotDone&&!failed){const e=new TypeError('dropped');throw e;}
   U.abort=null;bot.reconnecting=false;
   if(failed){bot.text=(bot.text?bot.text+'\n\n':'')+`**No se pudo completar la respuesta.** ${failed}`;bot.stopped=!bot.ask;}
-  else if(!bot.text&&!bot.ask)bot.text='No llegó respuesta. Intenta de nuevo.';
+  else if(!bot.text&&!bot.ask)bot.text='El servidor terminó sin escribir nada. Toca «Volver a generar» para intentarlo otra vez.';
   finishStream(c,idx);
   if(opts.tracked){if(bot.ask)islaDone(`${MODEL_NAME} necesita tu permiso`,askLabel(bot.ask));else islaDone('Respuesta lista',plainPreview(bot.text));}
   notifyDone(bot);autoOpenArtifact(c,idx);
@@ -2446,12 +2457,12 @@ function toolsHTML(m){if(m.research&&m.tools&&m.tools.length)return researchHTML
 function toolsListHTML(m){
  if(!m.tools||!m.tools.length)return '';
  return `<div class="tools">${m.tools.map(t=>{
-  if(t.name==='ver_imagen'){const busy=t.status==='start';return `<div class="tool-step ${t.status}">${busy?'<span class="pulse"></span>':ic('eye','sm')}<span class="t">${busy?'Mirando la foto…':t.status==='error'?'No pude ver la foto':'Vio la foto'}</span></div>`;}
+  if(t.name==='ver_imagen'){const busy=t.status==='start';return `<div class="tool-step ${t.status}">${busy?'<span class="pulse"><i></i><i></i><i></i></span>':ic('eye','sm')}<span class="t${busy?' shimmer':''}">${busy?'Mirando la foto…':t.status==='error'?'No pude ver la foto':'Vio la foto'}</span></div>`;}
   const search=t.name==='buscar_en_internet',busy=t.status==='start',q=`«${clip(t.query,70)}»`,host=t.host||hostOf(t.url);
   const label=search?(busy?`Buscando ${q}…`:t.status==='denied'?`Sin permiso para buscar ${q}`:t.status==='error'?`No se pudo buscar ${q}`:`Buscó ${q}`)
    :(busy?`Abriendo ${host}…`:t.status==='denied'?`Sin permiso para entrar a ${host}`:t.status==='error'?`No se pudo abrir ${host}`:`Leyó ${t.title?clip(t.title,60)+' · '+host:host}`);
   const link=!search&&t.url&&t.status!=='denied';
-  return `<div class="tool-step ${t.status}">${busy?'<span class="pulse"></span>':ic(search?'search':'globe','sm')}${link?`<button type="button" data-action="open-link" data-url="${esc(t.url)}">${esc(label)}</button>`:`<span class="t">${esc(label)}</span>`}</div>`;
+  return `<div class="tool-step ${t.status}">${busy?'<span class="pulse"><i></i><i></i><i></i></span>':ic(search?'search':'globe','sm')}${link?`<button type="button" data-action="open-link" data-url="${esc(t.url)}">${esc(label)}</button>`:`<span class="t">${esc(label)}</span>`}</div>`;
  }).join('')}</div>`;
 }
 function askHTML(m,i){
@@ -2516,7 +2527,7 @@ function artifactsOf(text){
 }
 function artifactCardHTML(a,i,n,streaming){
  const writing=streaming&&!a.closed;
- return `<button type="button" class="artifact-card${writing?' writing':''}" data-action="open-artifact" data-i="${i}" data-n="${n}"><span class="af-ic">${writing?'<span class="pulse"></span>':ic(a.kind==='slides'?'slides':a.kind==='svg'?'image':'code')}</span><span class="af-t"><b>${esc(a.title)}</b><span>${AF_NAME[a.kind]} · ${writing?`escribiendo… ${nf(a.lines)} líneas`:`${nf(a.lines)} líneas`}</span></span><span class="af-go">${writing?'Ver código':'Abrir'}</span></button>`;
+ return `<button type="button" class="artifact-card${writing?' writing':''}" data-action="open-artifact" data-i="${i}" data-n="${n}"><span class="af-ic">${writing?'<span class="pulse"><i></i><i></i><i></i></span>':ic(a.kind==='slides'?'slides':a.kind==='svg'?'image':'code')}</span><span class="af-t"><b>${esc(a.title)}</b><span>${AF_NAME[a.kind]} · ${writing?`escribiendo… ${nf(a.lines)} líneas`:`${nf(a.lines)} líneas`}</span></span><span class="af-go">${writing?'Ver código':'Abrir'}</span></button>`;
 }
 function openArtifact(c,i,n,tab){
  const m=c&&c.messages[i];if(!m)return;
@@ -2598,7 +2609,7 @@ async function loadBrowser(){
 function browserHome(title,text,extra=''){return `<div class="pn-reader"><div class="br-home">${ic('globe','lg')}<b>${title}</b><span>${text}</span>${extra}</div></div>`;}
 function readerHTML(p){
  if(!apiReady())return browserHome('La lectura necesita el servidor','Conecta el servidor de Lithium en Administración, o mira la página original.',`<button class="btn sm" data-action="br-mode" data-val="live">Ver la página original</button>`);
- if(p.loading||!p.page)return `<div class="pn-reader"><div class="thinking-live"><span class="pulse"></span>Abriendo ${esc(hostOf(p.url))}…</div></div>`;
+ if(p.loading||!p.page)return `<div class="pn-reader"><div class="thinking-live"><span class="pulse"><i></i><i></i><i></i></span><span class="shimmer">Abriendo ${esc(hostOf(p.url))}…</span></div></div>`;
  const pg=p.page;
  if(!pg.ok)return browserHome(esc(pg.title||'No se pudo abrir'),esc(pg.content||''),`<button class="btn sm" data-action="br-mode" data-val="live">Ver la página original</button>`);
  return `<div class="pn-reader"><div class="md"><h3 class="md-h1">${esc(pg.title||hostOf(pg.url))}</h3><p class="pn-src">${esc(hostOf(pg.url||p.url))}</p>${md(pg.text||'')}</div></div>`;
@@ -3203,7 +3214,7 @@ function settingsTab(t){
    ${useSplitHTML(u)}
    ${meter('Créditos para imágenes y video',u.credits,u.creditsCap,`Imagen: 1 crédito · Video de 5 s: 5 créditos · Se renuevan el ${fmtDay(u.creditsResetAt)}`)}
   </div>
-  <p class="use-note">Una sola medida para todo tu plan: el chat y Liminal Dev comparten la sesión de 5 horas y el límite de la semana. Se mide en tokens, lo que ${MODEL_NAME} lee, razona y escribe; lo que reutiliza de la caché cuenta mucho menos y fuera de las horas pico todo cuesta la mitad. El modo rápido gasta unas diez veces menos y sigue disponible aunque se acabe la sesión.</p>
+  <p class="use-note">Una sola medida para todo tu plan: el chat y Liminal Dev comparten la sesión de 5 horas y el límite de la semana. Se mide en tokens, lo que ${MODEL_NAME} lee, razona y escribe; lo que reutiliza de la caché cuenta mucho menos y fuera de las horas pico todo cuesta la mitad. El modo rápido gasta varias veces menos porque no se pone a pensar, y sigue disponible aunque se acabe la sesión.</p>
   <div class="set-row"><div class="set-text"><b>Paquete de ${EXTRA_PACK.credits} créditos</b><span>Para cuando necesites más imágenes o videos este mes. Se suman a los de tu plan.</span></div><button class="btn" data-action="buy-credits">${money(EXTRA_PACK.price)}</button></div>
   <div class="set-sec">Renovar</div>
   <div class="set-row"><div class="set-text"><b>Plan</b><span>El semanal sirve para probar o para pagar según tu flujo de dinero.</span></div>${seg('prefs.plan',[['mensual',`Mensual · ${money(ad.priceMonthly)}`],['semanal',`Semanal · ${money(ad.priceWeekly)}`]],'Plan')}</div>
@@ -3329,7 +3340,7 @@ const A={
  'export-pdf':el=>{closePop();const c=curChat();const m=c.messages[+el.dataset.val];exportPDF(blocksFromMd(m.text),c.title);},
  'export-docx':el=>{closePop();const c=curChat();const m=c.messages[+el.dataset.val];exportDOCX(blocksFromMd(m.text),c.title);},
  'open-editor':el=>{closePop();const c=curChat();const i=+el.dataset.val;const d=docOf(c.messages[i].text);openEditor(d?d.title:c.title,md(c.messages[i].text),{chat:c.id,i});},
- 'doc-dl':el=>{const c=curChat();const m=c&&c.messages[+el.dataset.i];if(!m)return;const b=blocksFromMd(m.text);if(el.dataset.val==='pdf')exportPDF(b,c.title);else exportDOCX(b,c.title);},
+ 'doc-dl':el=>{const c=curChat();const m=c&&c.messages[+el.dataset.i];if(!m)return;const b=blocksFromMd(docSource(m.text));if(el.dataset.val==='pdf')exportPDF(b,c.title);else exportDOCX(b,c.title);},
  'edit-file':el=>{const c=curChat();const m=c.messages[+el.dataset.i];const f=(m.files||[]).find(x=>x.id===el.dataset.val);if(!f)return;openEditor(f.name,f.text.split(/\n+/).filter(Boolean).map(l=>`<p>${esc(l)}</p>`).join(''),null);},
  'ed-cmd':el=>{const v=el.dataset.val,a=$('#ed-area');if(!a)return;a.focus();if(v==='bold'||v==='italic')document.execCommand(v);else if(v==='ul')document.execCommand('insertUnorderedList');else document.execCommand('formatBlock',false,'<'+v+'>');},
  'ed-export':el=>{const a=$('#ed-area');if(!a)return;const b=blocksFromHtml(a);if(!b.length){toast('El documento está vacío.');return;}if(el.dataset.val==='pdf')exportPDF(b,U.editTitle);else exportDOCX(b,U.editTitle);},
@@ -3429,7 +3440,7 @@ Object.assign(P,{
  github:'<path d="M9 19c-4 1.3-4-2-5.5-2.5M14.5 21v-3.4c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 0 0-6.2 0C6.1 2.9 5.1 3.2 5.1 3.2a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 3.7 9.6c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/>',
 });
 const LD={ready:false,db:null,projects:[],cur:null,tab:'agent',side:'code',file:null,open:[],mtree:true,console:[],previewPath:null,draft:'',running:false,ctl:null,approve:null,autoTurn:false,closed:{},show:{},frames:{},dirty:new Set(),plan:false,review:null,todoOpen:false,queue:[],pos:null,selText:'',ctx:0,popItems:null,popSel:0,saveT:null,paintQ:false,changed:null,py:null,frameN:0,errs:0};
-const LD_ROUNDS=40,LD_OUT=24000,LD_STALL=75000;
+const LD_ROUNDS=40,LD_OUT=14000,LD_STALL=120000;
 const LD_EXPLORE=new Set(['listar_archivos','leer_archivo','buscar_en_proyecto']);
 const LD_PLAN='Modo plan: primero investiga el proyecto solo con herramientas de lectura y búsqueda; NO crees, cambies ni borres archivos todavía. Termina con un plan claro y numerado (y una lista_de_tareas) y pregúntame si lo apruebo.\n\nLo que quiero: ';
 const LD_TURNS=new WeakMap();
@@ -3593,7 +3604,7 @@ async function ldTool(p,call,item,signal){
     const r=need('ruta');item.path=r;if(!(r in F))return missing(r);
     if(ldIsData(F[r]))return `«${r}» es un archivo binario (${ldMime(r)}, ${ldSize(F[r])} bytes); no se puede leer como texto.`;
     const ranged=a.desde!=null||a.hasta!=null,from=parseInt(a.desde)||1;
-    const n=ldNumbered(F[r],from,ranged&&a.hasta!=null?a.hasta:from+499);let t=n.text,last=n.b;
+    const n=ldNumbered(F[r],from,ranged&&a.hasta!=null?a.hasta:from+299);let t=n.text,last=n.b;
     if(t.length>LD_OUT){const cut=t.lastIndexOf('\n',LD_OUT);t=t.slice(0,cut>0?cut:LD_OUT);last=parseInt((t.split('\n').pop()||'').trim())||n.b;}
     item.note=n.a===1&&last===n.total?`${n.total} líneas`:`líneas ${n.a}–${last}`;
     const more=last<n.total?`\n… Faltan las líneas ${last+1}-${n.total}. Para ir directo a lo que necesitas usa buscar_en_proyecto y lee ese rango con desde/hasta.`:'';
@@ -3997,7 +4008,7 @@ ${ldNumbered(p.files[f],1,400).text.slice(0,14000)}`;});out.push({role:'user',co
 function ldCompact(turn,limit){
  const out=turn.map(m=>Object.assign({},m));
  let size=out.reduce((n,m)=>n+String(m.content||'').length+String(m.reasoning_content||'').length+(m.tool_calls?JSON.stringify(m.tool_calls).length:0),0);
- const keep=Math.max(0,out.length-8);
+ const keep=Math.max(0,out.length-6);
  for(let k=0;k<keep&&size>limit;k++){
   const m=out[k];
   if(m.role==='tool'&&m.content.length>400){size-=m.content.length-160;m.content=m.content.slice(0,140)+'\n[Resultado recortado para ahorrar espacio. Vuelve a usar la herramienta si lo necesitas.]';}
@@ -4040,7 +4051,7 @@ async function ldServerRound(p,bot,turn,signal){
  let tight=false;
  for(let attempt=0;;attempt++){
   const mark=bot.items.length,turnLen=turn.length;let calls=[],text=null,err=null,ok=false;
-  const body=Object.assign(profileForModel('general',false),{tier:bot.tier,effort:bot.effort,dev:true,project:ldSummary(p),messages:ldHistory(p,bot),turn:ldCompact(turn,tight?120000:320000),browse:S.prefs.browse==='off'?'off':'auto'});
+  const body=Object.assign(profileForModel('general',false),{tier:bot.tier,effort:bot.effort,dev:true,project:ldSummary(p),messages:ldHistory(p,bot),turn:ldCompact(turn,tight?60000:130000),browse:S.prefs.browse==='off'?'off':'auto'});
   ldSetCtx(Math.round(JSON.stringify(body).length/3.6));
   try{
    ok=await ldStream(body,ev=>{
@@ -4366,7 +4377,7 @@ function ldTodoBarHTML(p){
  const list=p.todo||[];if(!list.length)return '';
  const done=list.filter(t=>t.estado==='hecha').length;if(done===list.length&&!LD.running)return '';
  const now=list.find(t=>t.estado==='en_curso')||list.find(t=>t.estado==='pendiente');
- return `<div class="ld-todobar"><button class="ld-todo-h" data-action="ld-todo" aria-expanded="${LD.todoOpen}">${ic('tasks','sm')}<b>${done}/${list.length}</b><span>${esc(now?now.tarea:'Tareas listas')}</span>${ic('chev','xs')}</button>${LD.todoOpen?`<div class="ld-todo-list">${list.map(t=>`<div class="ld-todo-i ${t.estado}">${t.estado==='hecha'?ic('check','xs'):t.estado==='en_curso'?'<span class="pulse"></span>':'<span class="ld-dot"></span>'}<span>${esc(t.tarea)}</span></div>`).join('')}</div>`:''}</div>`;
+ return `<div class="ld-todobar"><button class="ld-todo-h" data-action="ld-todo" aria-expanded="${LD.todoOpen}">${ic('tasks','sm')}<b>${done}/${list.length}</b><span>${esc(now?now.tarea:'Tareas listas')}</span>${ic('chev','xs')}</button>${LD.todoOpen?`<div class="ld-todo-list">${list.map(t=>`<div class="ld-todo-i ${t.estado}">${t.estado==='hecha'?ic('check','xs'):t.estado==='en_curso'?'<span class="pulse"><i></i><i></i><i></i></span>':'<span class="ld-dot"></span>'}<span>${esc(t.tarea)}</span></div>`).join('')}</div>`:''}</div>`;
 }
 function ldDetailOf(it){
  if(it.status==='wait'&&it.pend)return it.pend.diff?ldDiffHTML(it.pend.diff):`<p class="ld-pend">${esc(it.pend.text||'')}</p>`;
@@ -4379,11 +4390,11 @@ function ldWebLabel(it){const search=it.name==='buscar_en_internet',busy=it.stat
 /** One action on one line; the details (diff, output) open on a tap. */
 function ldStepHTML(it,i,k){
  const key=i+'.'+k,busy=it.status==='run',wait=it.status==='wait';
- if(it.type==='web')return `<div class="ld-line ${it.status}">${busy?'<span class="pulse"></span>':ic(it.name==='buscar_en_internet'?'search':'globe','xs')}<span class="t">${esc(ldWebLabel(it))}</span></div>`;
+ if(it.type==='web')return `<div class="ld-line ${it.status}">${busy?'<span class="pulse"><i></i><i></i><i></i></span>':ic(it.name==='buscar_en_internet'?'search':'globe','xs')}<span class="t${busy?' shimmer':''}">${esc(ldWebLabel(it))}</span></div>`;
  const detail=ldDetailOf(it),open=wait||!!LD.show[key];
  const meta=it.diag?`<span class="ld-note bad" title="${esc(it.diag)}">error de sintaxis</span>`:it.diff&&(it.diff.add||it.diff.del)?`<span class="ld-pm">${it.diff.add?`<b class="add">+${it.diff.add}</b>`:''}${it.diff.del?`<b class="del">−${it.diff.del}</b>`:''}</span>`:it.note?`<span class="ld-note ${it.errors||it.status==='error'?'bad':''}">${esc(it.note)}</span>`:'';
  const label=wait?`Quiere ${ldLabel(it,true).replace(/^./,c=>c.toLowerCase())}`:it.status==='denied'?`No se hizo: ${ldLabel(it,true).toLowerCase()}`:ldLabel(it);
- const head=`${busy?'<span class="pulse"></span>':wait?ic('shield','xs'):ic(it.status==='error'||it.status==='denied'?'x':LD_ICON[it.name]||'code','xs')}<span class="t">${esc(label)}</span>${meta}`;
+ const head=`${busy?'<span class="pulse"><i></i><i></i><i></i></span>':wait?ic('shield','xs'):ic(it.status==='error'||it.status==='denied'?'x':LD_ICON[it.name]||'code','xs')}<span class="t${busy?' shimmer':''}">${esc(label)}</span>${meta}`;
  const openFile=it.path&&LD.cur&&it.path in LD.cur.files&&!wait?`<button class="link-btn" data-action="ld-open" data-path="${esc(it.path)}">Abrir ${esc(it.path)}</button>`:'';
  return `<div class="ld-line ${it.status} ${detail?'has':''}">${detail?`<button type="button" class="ld-line-h" data-action="ld-step" data-k="${key}" aria-expanded="${open}">${head}${ic('chevr','xs chev-rot')}</button>`:`<div class="ld-line-h">${head}</div>`}${open&&detail?`<div class="ld-detail">${detail}${openFile?`<div class="ld-detail-f">${openFile}</div>`:''}</div>`:''}${wait?`<div class="ld-approve"><button class="btn sm primary" data-action="ld-approve" data-val="yes">Aprobar</button><button class="btn sm" data-action="ld-approve" data-val="all">Aprobar todo</button><button class="btn sm" data-action="ld-approve" data-val="no">Rechazar</button></div>`:''}</div>`;
 }
@@ -4395,7 +4406,7 @@ function ldGroupHTML(g,i){
  const read=new Set(its.filter(x=>x.name==='leer_archivo').map(x=>x.path||(x.args||{}).ruta)).size,find=its.filter(x=>x.name==='buscar_en_proyecto').length,list=its.some(x=>x.name==='listar_archivos'),web=its.filter(x=>x.type==='web'&&x.name==='buscar_en_internet').length,pages=its.filter(x=>x.type==='web'&&x.name!=='buscar_en_internet').length,bad=its.filter(x=>x.status==='error').length;
  const parts=[];if(list)parts.push('la lista de archivos');if(read)parts.push(`${read} archivo${read>1?'s':''}`);if(find)parts.push(`${find} búsqueda${find>1?'s':''}`);if(web)parts.push(`${web} búsqueda${web>1?'s':''} en internet`);if(pages)parts.push(`${pages} página${pages>1?'s':''} web`);
  const label=busy?(busy.type==='web'?ldWebLabel(busy):ldLabel(busy)):`Revisó ${parts.join(', ').replace(/, ([^,]*)$/,' y $1')}`;
- return `<div class="ld-line ld-group ${busy?'run':''}"><button type="button" class="ld-line-h" data-action="ld-step" data-k="${key}" aria-expanded="${open}">${busy?'<span class="pulse"></span>':ic('search','xs')}<span class="t">${esc(label)}</span>${bad?`<span class="ld-note bad">${bad} con error</span>`:''}<span class="ld-count">${its.length}</span>${ic('chevr','xs chev-rot')}</button>${open?`<div class="ld-sub">${g.map(([it,k])=>ldStepHTML(it,i,k)).join('')}</div>`:''}</div>`;
+ return `<div class="ld-line ld-group ${busy?'run':''}"><button type="button" class="ld-line-h" data-action="ld-step" data-k="${key}" aria-expanded="${open}">${busy?'<span class="pulse"><i></i><i></i><i></i></span>':ic('search','xs')}<span class="t${busy?' shimmer':''}">${esc(label)}</span>${bad?`<span class="ld-note bad">${bad} con error</span>`:''}<span class="ld-count">${its.length}</span>${ic('chevr','xs chev-rot')}</button>${open?`<div class="ld-sub">${g.map(([it,k])=>ldStepHTML(it,i,k)).join('')}</div>`:''}</div>`;
 }
 function ldMsgHTML(m,i,p){
  if(m.role==='user'){const c=m.cmd&&LD_CMDS.find(x=>x[0]===m.cmd);return `<div class="msg user">${c?`<span class="cmd-tag">${ic(c[3],'xs')}/${c[0]} · ${esc(c[1])}</span>`:m.plan?`<span class="cmd-tag">${ic('tasks','xs')}Modo plan</span>`:''}${m.text?`<div class="bubble">${esc(m.text).replace(/@([\w./-]+)/g,(x,f)=>LD.cur&&LD.cur.files[f]!=null?`<button class="ld-at" data-action="ld-open" data-path="${esc(f)}">@${esc(f)}</button>`:x)}</div>`:''}</div>`;}
@@ -4418,8 +4429,8 @@ function ldMsgHTML(m,i,p){
  });
  flush();
  const last=items[items.length-1];
- if(m.running&&m.status)body+=`<div class="thinking-live"><span class="pulse"></span>${esc(m.status)}</div>`;
- else if(m.running&&!(last&&(last.status==='run'||last.status==='wait')))body+=`<div class="thinking-live"><span class="pulse"></span>${m.tier==='adv'?`Pensando con esfuerzo ${EFF[m.effort].name.toLowerCase()}…`:'Pensando…'}</div>`;
+ if(m.running&&m.status)body+=`<div class="thinking-live"><span class="pulse"><i></i><i></i><i></i></span><span class="shimmer">${esc(m.status)}</span></div>`;
+ else if(m.running&&!(last&&(last.status==='run'||last.status==='wait')))body+=`<div class="thinking-live"><span class="pulse"><i></i><i></i><i></i></span><span class="shimmer">${m.tier==='adv'?`Pensando con esfuerzo ${EFF[m.effort].name.toLowerCase()}…`:'Pensando…'}</span></div>`;
  if(m.error)body+=`<div class="ld-alert">${ic('x','sm')}<span>${esc(m.error)}</span><button class="btn sm" data-action="ld-continue" data-i="${i}">Continuar</button></div>`;
  else if(!m.running&&(m.empty||m.more))body+=`<div class="ld-alert soft">${ic('refresh','sm')}<span>${m.more?'Quedó trabajo pendiente.':'No llegó respuesta en este paso.'}</span><button class="btn sm" data-action="ld-continue" data-i="${i}">Continuar</button></div>`;
  if(m.stopped)body+=`<div class="ld-alert soft">${ic('stop','sm')}<span>Detuviste esta tarea.</span><button class="btn sm" data-action="ld-continue" data-i="${i}">Continuar</button></div>`;
@@ -4543,7 +4554,7 @@ function ldHomeHTML(){
  </div></div>`;
 }
 function renderDev(){
- if(!LD.ready){view.innerHTML=`<div class="ld-home"><div class="thinking-live" style="margin:40px auto"><span class="pulse"></span>Abriendo tus proyectos…</div></div>`;ldLoad().then(()=>{if(U.view==='dev')renderDev();});return;}
+ if(!LD.ready){view.innerHTML=`<div class="ld-home"><div class="thinking-live" style="margin:40px auto"><span class="pulse"><i></i><i></i><i></i></span><span class="shimmer">Abriendo tus proyectos…</span></div></div>`;ldLoad().then(()=>{if(U.view==='dev')renderDev();});return;}
  if(!LD.cur||!LD.projects.includes(LD.cur)){LD.cur=null;view.innerHTML=ldHomeHTML();return;}
  const p=LD.cur,narrow=ldNarrow(),mt=narrow?(LD.tab==='agent'?'agent':LD.side):'';
  const keep=ldKeepFocus();
@@ -4688,7 +4699,7 @@ function ldSideHTML(){
  <button class="sb-search" data-action="ld-import-zip">${ic('upload')}<span>Importar ZIP</span></button>
  <button class="sb-search" data-action="ld-import-gh">${ic('github')}<span>Desde GitHub</span></button>
  <nav class="sb-scroll" aria-label="Proyectos de Liminal Dev"><div class="sb-label"><span>Proyectos</span></div>
- ${list.map(p=>{const act=LD.cur===p,busy=LD.running&&p.chat.some(m=>m.running);return `<div class="sb-chat"><button class="sb-item ${act?'active':''}" data-action="ld-project" data-id="${p.id}" ${act?'aria-current="page"':''}>${ic('code','sm')}<span class="t">${esc(p.name)}</span>${busy?'<span class="pulse"></span>':''}</button><button class="more" data-action="ld-project-menu" data-id="${p.id}" aria-label="Opciones de ${esc(p.name)}">${ic('dots','sm')}</button></div>`;}).join('')||'<p class="sb-group">Crea o importa un proyecto para empezar.</p>'}
+ ${list.map(p=>{const act=LD.cur===p,busy=LD.running&&p.chat.some(m=>m.running);return `<div class="sb-chat"><button class="sb-item ${act?'active':''}" data-action="ld-project" data-id="${p.id}" ${act?'aria-current="page"':''}>${ic('code','sm')}<span class="t">${esc(p.name)}</span>${busy?'<span class="pulse"><i></i><i></i><i></i></span>':''}</button><button class="more" data-action="ld-project-menu" data-id="${p.id}" aria-label="Opciones de ${esc(p.name)}">${ic('dots','sm')}</button></div>`;}).join('')||'<p class="sb-group">Crea o importa un proyecto para empezar.</p>'}
  </nav>`;
 }
 function ldProjectMenu(id){const p=LD.projects.find(x=>x.id===id);if(!p)return '';return `${item('ld-rename',id,'edit','Renombrar')}${item('ld-export',id,'download','Exportar ZIP')}${p.chat.length?item('ld-clear-chat',id,'refresh','Limpiar la conversación'):''}<div class="menu-sep"></div>${item('ld-delete',id,'trash','Borrar proyecto','danger')}`;}
@@ -4785,7 +4796,7 @@ const wgParse=code=>{try{const j=JSON.parse(code);return j&&typeof j==='object'?
 const wgNum=(n,u)=>{const v=Number(n);if(!isFinite(v))return '—';const s=v.toLocaleString('es',{maximumFractionDigits:Math.abs(v)<10?2:Math.abs(v)<1000?1:0,useGrouping:'always'});return u?(/^[$€£]$/.test(u)?u+s:s+' '+u):s;};
 const wgShort=n=>{const a=Math.abs(n);return a>=1e9?(n/1e9).toLocaleString('es',{maximumFractionDigits:1})+' mil M':a>=1e6?(n/1e6).toLocaleString('es',{maximumFractionDigits:1})+' M':a>=1e4?(n/1e3).toLocaleString('es',{maximumFractionDigits:1})+' K':n.toLocaleString('es',{maximumFractionDigits:2});};
 function wgNice(v){if(v<=0)return 1;const e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return(f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;}
-const wgWait=t=>`<div class="wg wg-wait"><span class="pulse"></span>${t}</div>`;
+const wgWait=t=>`<div class="wg wg-wait"><span class="pulse"><i></i><i></i><i></i></span>${t}</div>`;
 const wgRaw=(name,code)=>`<div class="code"><div class="code-head"><span>${name}</span><button type="button" data-action="copy-code">Copiar</button></div><pre><code>${esc(code)}</code></pre></div>`;
 function wgTable(labels,series,unit,pie){
  return `<details class="wg-data"><summary>Ver los datos</summary><div class="tbl-wrap"><table class="tbl"><thead><tr><th></th>${series.map(s=>`<th>${esc(s.name||'Valor')}</th>`).join('')}${pie?'<th>%</th>':''}</tr></thead><tbody>${labels.map((l,i)=>`<tr><td>${esc(l)}</td>${series.map(s=>`<td class="num">${wgNum(s.vals[i],unit)}</td>`).join('')}${pie?`<td class="num">${pie[i]}</td>`:''}</tr>`).join('')}</tbody></table></div></details>`;
@@ -4872,7 +4883,7 @@ document.addEventListener('input',e=>{
 function researchHTML(m){
  const t=m.tools||[],s=t.filter(x=>x.name==='buscar_en_internet').length,pg=t.filter(x=>x.name==='abrir_pagina'&&x.status==='done').length,busy=m.streaming||m.pending;
  const now=t.slice().reverse().find(x=>x.status==='start'),doing=now?(now.name==='buscar_en_internet'?`busca «${clip(now.query,40)}»`:now.name==='ver_imagen'?'mira la foto':`lee ${now.host||''}`):'';
- return `<details class="think research" ${busy?'open':''}><summary>${busy?'<span class="pulse"></span>':ic('book','sm')}<span>${busy?`Investigando${doing?' · '+esc(doing):''}…`:'Investigó'} · ${s} búsqueda${s===1?'':'s'}, ${pg} página${pg===1?'':'s'} leída${pg===1?'':'s'}</span>${ic('chevr','xs chev-rot')}</summary><div class="think-body">${toolsListHTML(m)}</div></details>`;
+ return `<details class="think research" ${busy?'open':''}><summary>${busy?'<span class="pulse"><i></i><i></i><i></i></span>':ic('book','sm')}<span>${busy?`Investigando${doing?' · '+esc(doing):''}…`:'Investigó'} · ${s} búsqueda${s===1?'':'s'}, ${pg} página${pg===1?'':'s'} leída${pg===1?'':'s'}</span>${ic('chevr','xs chev-rot')}</summary><div class="think-body">${toolsListHTML(m)}</div></details>`;
 }
 function researchDemo(q){
  const t=titleFrom(q||'tu pregunta');
