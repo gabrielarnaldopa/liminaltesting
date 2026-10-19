@@ -5,3 +5,5 @@ Bibliotecas abiertas incluidas en esta carpeta:
 - JSZip 3.10.1 · MIT · crea documentos de Word
 
 acorn 8.12.1 (lib/acorn.min.js): licencia MIT, (C) 2012-2022 los colaboradores de acorn. https://github.com/acornjs/acorn
+
+html2canvas 1.4.1 — MIT License — Copyright (c) 2012 Niklas von Hertzen — https://github.com/niklasvh/html2canvas

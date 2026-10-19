@@ -784,14 +784,6 @@ button.ld-step-h:hover{color:var(--ink)}
 .ld-foot .act{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--ink-3)}
 .ld-foot .act:hover{background:var(--hover);color:var(--ink)}
 .ld-secs{color:var(--ink-3)}
-/* Archivos entregados en el chat, listos para descargar */
-.ld-give{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 2px}
-.ld-give-t{display:inline-flex;align-items:center;gap:4px;font-size:.82em;color:var(--ink-3);margin-right:2px}
-.ld-give .ld-chip{height:26px;font-size:.85em;max-width:220px}
-.ld-give .ld-chip span{display:block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ld-give .ld-chip.main{background:var(--ink);color:var(--bg);font-weight:500}
-.ld-give .ld-chip.main:hover{background:var(--ink);opacity:.9}
-.ld-give .ld-chip.main span{color:var(--bg);font-weight:400;opacity:.8}
 .ld-stopped{margin:0;color:var(--ink-3);font-size:.88em}
 .ld-err{align-items:center}.ld-err>div{flex:1}
 .ld-empty{margin:auto;max-width:30rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--ink-2);padding:24px 8px}
@@ -1007,6 +999,11 @@ h1,h2,.page-h1{letter-spacing:-.012em}
 .use-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8em;color:var(--ink-3)}
 .use-legend span{display:inline-flex;align-items:center;gap:6px}
 .use-legend i{width:8px;height:8px;border-radius:2px;display:inline-block}
+/* v23: dropping files, saved points */
+body.ld-dropping #main{outline:2px dashed var(--ink-3);outline-offset:-10px;border-radius:18px}
+.ld-points{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto}
+.ld-point{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--raised)}
+.ld-point-t{display:flex;flex-direction:column;min-width:0;flex:1}.ld-point-t b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ld-point-t span{font-size:.82em;color:var(--ink-3)}
 /* v18: charts and calculators inside answers, deep research, shared projects */
 .wg{--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;margin:10px 0;border:1px solid var(--line);border-radius:14px;background:var(--raised);padding:12px 14px;overflow:hidden}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .wg{--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300}}
@@ -1183,7 +1180,7 @@ const CREATE={
 };
 const EXTRA_PACK={credits:100,price:6};
 /* File reading runs in the browser with local copies of open libraries in lib/. */
-const LIBS={pdf:'lib/pdf.min.js',mammoth:'lib/mammoth.browser.min.js',jspdf:'lib/jspdf.umd.min.js',jszip:'lib/jszip.min.js',acorn:'lib/acorn.min.js'};
+const LIBS={pdf:'lib/pdf.min.js',mammoth:'lib/mammoth.browser.min.js',jspdf:'lib/jspdf.umd.min.js',h2c:'lib/html2canvas.min.js',jszip:'lib/jszip.min.js',acorn:'lib/acorn.min.js'};
 const libLoads={};
 function loadLib(k){return libLoads[k]||(libLoads[k]=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=LIBS[k];sc.onload=()=>res();sc.onerror=()=>{delete libLoads[k];rej(new Error('lib'));};document.head.appendChild(sc);}));}
 const KIND_LABEL={pdf:'PDF',doc:'Word',audio:'Audio',image:'Imagen',text:'Texto',sheet:'Hoja de cálculo',file:'Archivo'};
@@ -1490,175 +1487,29 @@ async function download(blob,name){
  if(dl){try{await dl.save({filename:name,data:blob});toast(`Listo: ${name}`);}catch(e){if(!e||e.code!=='declined')toast('No se pudo guardar el archivo en esta vista.');}return;}
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);toast(`Descargaste ${name}`);
 }
-/* ---------- PDF ----------
-   One engine draws every PDF: cover, colored headings, tinted quotes, striped tables
-   and page numbers. The color comes from a color the person named ("en rojo"), from the
-   colors an HTML page already had, or from the title, so every document looks designed. */
-const PDF_PALETTES={tinta:[26,26,30],azul:[28,78,160],rojo:[176,34,46],verde:[20,110,78],morado:[104,52,158],naranja:[201,94,18],rosa:[176,52,104],turquesa:[13,110,128],vino:[122,32,60]};
-const PDF_COLOR_WORDS=[[/morad|violeta|lila|p[uú]rpura/i,'morado'],[/turquesa|cian|petr[oó]leo/i,'turquesa'],[/naranja|terracota|[aá]mbar/i,'naranja'],[/rosa|fucsia|magenta/i,'rosa'],[/rojo|vino|granate|carmes/i,'rojo'],[/azul|celeste|marino|a[ñn]il/i,'azul'],[/verde|esmeralda|oliva/i,'verde']];
-const pdfLuma=c=>(0.299*c[0]+0.587*c[1]+0.114*c[2])/255;
-const pdfShade=(c,f)=>c.map(v=>Math.round(v*(1-f)));
-const pdfMix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
-function pdfAccent(text){
- const s=String(text||'');
- for(const [re,key] of PDF_COLOR_WORDS)if(re.test(s))return PDF_PALETTES[key];
- const keys=Object.keys(PDF_PALETTES);
- return PDF_PALETTES[keys[hashStr(s.slice(0,240))%keys.length]];
-}
-function pdfPalette(rgb){
- const accent=pdfLuma(rgb)>0.62?pdfShade(rgb,0.5):rgb;
- return {accent,deep:pdfShade(accent,0.36),soft:pdfMix(accent,[255,255,255],0.9),line:pdfMix(accent,[255,255,255],0.74),ink:[34,34,40],grey:[120,120,128]};
-}
-/** The strongest color of an HTML page, so the PDF looks like the page the person saw. */
-function pdfHtmlAccent(html){
- const src=String(html||''),count=new Map();
- const hexes=(src.match(/#[0-9a-fA-F]{6}\b/g)||[]).concat(src.match(/#[0-9a-fA-F]{3}\b/g)||[]);
- for(const h of hexes){
-  const v=h.slice(1).toLowerCase();
-  const rgb=v.length===3?v.split('').map(x=>parseInt(x+x,16)):[0,2,4].map(i=>parseInt(v.slice(i,i+2),16));
-  const mx=Math.max(...rgb),mn=Math.min(...rgb);
-  if(mx<50||(mx-mn)/mx<0.22)continue;
-  const key=rgb.join(',');
-  count.set(key,(count.get(key)||0)+1);
- }
- let best=null,n=0;
- count.forEach((k,v)=>{if(k>n){n=k;best=v;}});
- return best?best.split(',').map(Number):null;
-}
-/** An HTML page turned into the blocks this engine understands (its text, in order). */
-function pdfPlanFromHtml(html){
- let dom;
- try{dom=new DOMParser().parseFromString(String(html||''),'text/html');}catch(e){return null;}
- if(!dom||!dom.body)return null;
- dom.querySelectorAll('script,style,noscript,svg,iframe,link,meta,button,input,select,textarea,nav').forEach(n=>n.remove());
- const blocks=[];
- const txt=n=>(n.textContent||'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();
- const walk=root=>{
-  Array.from(root.children).forEach(n=>{
-   if(n.style&&n.style.display==='none')return;
-   const tag=n.tagName;
-   if(/^H[1-6]$/.test(tag)){const x=txt(n);if(x)blocks.push({t:'h',lv:+tag[1]===1?1:+tag[1]===2?2:3,x});return;}
-   if(tag==='P'){const x=txt(n);if(x)blocks.push({t:'p',x});return;}
-   if(tag==='UL'||tag==='OL'){Array.from(n.children).forEach((li,k)=>{const x=txt(li);if(x)blocks.push({t:'li',x,n:tag==='OL'?k+1:null});});return;}
-   if(tag==='TABLE'){const rows=Array.from(n.querySelectorAll('tr')).map(tr=>Array.from(tr.children).map(td=>txt(td))).filter(r=>r.some(c=>c));if(rows.length)blocks.push({t:'table',rows});return;}
-   if(tag==='BLOCKQUOTE'){const x=txt(n);if(x)blocks.push({t:'q',x});return;}
-   if(tag==='HR'){blocks.push({t:'hr'});return;}
-   if(/^(DIV|SECTION|ARTICLE|MAIN|HEADER|FOOTER|FIGURE|ASIDE|FIGCAPTION)$/.test(tag)){
-    if(n.querySelector('p,h1,h2,h3,h4,h5,h6,ul,ol,table,blockquote,div,section'))walk(n);
-    else{const x=txt(n);if(x)blocks.push({t:'p',x});}
-    return;
-   }
-   const x=txt(n);if(x)blocks.push({t:'p',x});
-  });
- };
- walk(dom.body);
- const t=dom.querySelector('h1')||dom.querySelector('title');
- return {blocks,title:((t?txt(t):'')||'Documento').slice(0,110),accent:pdfHtmlAccent(html)};
-}
-/** "Pásame esa página como PDF": keeps the page's title and its color. */
-async function exportPagePDF(html,fallback){
- const plan=pdfPlanFromHtml(html);
- if(!plan||!plan.blocks.length){toast('Esta página no tiene texto para pasar a PDF.');return;}
- await exportPDF(plan.blocks,plan.title||fallback||'Documento',{accent:plan.accent,cover:true,colorText:fallback||''});
-}
-async function exportPDF(all,fallback,opts={}){
+async function exportPDF(all,fallback){
  try{await loadLib('jspdf');}catch(e){toast('No se pudo preparar el PDF. Revisa tu conexión.');return;}
  const {title,blocks,doc:isDoc}=docParts(all,fallback);
- const {jsPDF}=window.jspdf;
- const doc=new jsPDF({unit:'pt',format:'a4',compress:true});
- const pal=pdfPalette(opts.accent||pdfAccent((opts.colorText||'')+' '+(title||'')));
- const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight(),M=56,CW=W-M*2,TOP=76,BOT=H-64;
- const safe=t=>String(t).replace(/→/g,'->').replace(/←/g,'<-').replace(/[×✕]/g,'x').replace(/[✓✔]/g,'v').replace(/[\u00a0\u2007\u202f]/g,' ').replace(/[^\x00-\xFF•…–—‘’“”€]/g,'');
- const ink=c=>doc.setTextColor(c[0],c[1],c[2]);
- const fill=c=>doc.setFillColor(c[0],c[1],c[2]);
- const stroke=c=>doc.setDrawColor(c[0],c[1],c[2]);
- const wrap=(t,size,w)=>{doc.setFontSize(size);return doc.splitTextToSize(safe(t),w);};
- const isCover=!!(isDoc||opts.cover);
- let y=TOP;
- const room=h=>{if(y+h>BOT){doc.addPage();y=TOP;}};
- const para=t=>{
-  const size=11,lh=size*1.62,ls=wrap(t,size,CW);
-  doc.setFont('helvetica','normal');ink(pal.ink);
-  ls.forEach(l=>{room(lh);doc.text(l,M,y+size);y+=lh;});
-  y+=9;
- };
- const bullet=(t,n)=>{
-  const size=11,lh=size*1.62,ind=20,ls=wrap((n?n+'. ':'')+t,size,CW-ind);
-  doc.setFont('helvetica','normal');ink(pal.ink);
-  ls.forEach((l,k)=>{
-   room(lh);
-   if(!n&&k===0){fill(pal.accent);doc.rect(M+4,y+size*0.55,3.6,3.6,'F');}
-   doc.text(l,M+ind,y+size);y+=lh;
-  });
-  y+=5;
- };
- const quote=t=>{
-  const size=10.8,lh=size*1.6,pad=15,ls=wrap(t,size,CW-pad*2-8),h=ls.length*lh+pad*2;
-  if(h+16>BOT-TOP){para(t);return;}
-  room(h+16);
-  fill(pal.soft);doc.roundedRect(M,y,CW,h,6,6,'F');
-  fill(pal.accent);doc.rect(M+1,y+8,3,h-16,'F');
-  doc.setFont('helvetica','italic');ink(pal.deep);
-  ls.forEach((l,k)=>doc.text(l,M+pad+6,y+pad+size*0.9+k*lh));
-  y+=h+16;
- };
- const head=(t,lv)=>{
-  const size=lv===1?18:lv===2?14:12,ind=lv===1?16:0,ls=wrap(t,size,CW-ind),h=ls.length*size*1.32;
-  room(h+36);
-  y+=lv===1?14:16;
-  if(lv===1){fill(pal.accent);doc.rect(M,y,4,Math.max(h-2,8),'F');}
-  doc.setFont('helvetica','bold');ink(lv===1?pal.deep:lv===2?pal.accent:pal.ink);
-  ls.forEach(l=>{doc.text(l,M+ind,y+size);y+=size*1.32;});
-  if(lv===2){stroke(pal.line);doc.setLineWidth(1);doc.line(M,y+4,W-M,y+4);y+=12;}
-  y+=6;
- };
+ const safe=t=>String(t).replace(/→/g,'->').replace(/[^\x00-\xFF•…–—‘’“”€]/g,'');
+ const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'a4'});const W=doc.internal.pageSize.getWidth(),PH=doc.internal.pageSize.getHeight(),M=56;let y=M;
+ const room=h=>{if(y+h>PH-M){doc.addPage();y=M;}};
+ const put=(t,size,style,indent=0,gap=6)=>{doc.setFont('helvetica',style);doc.setFontSize(size);doc.splitTextToSize(safe(t),W-M*2-indent).forEach(l=>{room(size);doc.text(l,M+indent,y+size);y+=size*1.4;});y+=gap;};
  const table=rows=>{
-  const n=Math.max(...rows.map(r=>r.length)),cw=CW/n,pad=7,size=9.4,lh=size*1.42;
+  const n=Math.max(...rows.map(r=>r.length)),cw=(W-M*2)/n,pad=5,size=9.5,lh=size*1.35;
+  doc.setFontSize(size);doc.setDrawColor(196);doc.setLineWidth(.6);y+=2;
   rows.forEach((r,k)=>{
    doc.setFont('helvetica',k===0?'bold':'normal');
-   const cells=Array.from({length:n},(_,j)=>wrap(r[j]||'',size,cw-pad*2));
-   const h=Math.max(...cells.map(c=>Math.max(c.length,1)))*lh+pad*2;
-   room(h);
-   if(k===0){fill(pal.accent);doc.rect(M,y,CW,h,'F');doc.setTextColor(255,255,255);}
-   else{fill(k%2?[255,255,255]:pal.soft);doc.rect(M,y,CW,h,'F');ink(pal.ink);stroke(pal.line);doc.setLineWidth(.5);doc.line(M,y+h,W-M,y+h);}
-   cells.forEach((c,j)=>c.forEach((l,q)=>doc.text(l,M+j*cw+pad,y+pad+size*0.95+q*lh)));
+   const cells=Array.from({length:n},(_,j)=>doc.splitTextToSize(safe(r[j]||''),cw-pad*2));
+   const h=Math.max(...cells.map(c=>c.length))*lh+pad*2;room(h);
+   if(k===0){doc.setFillColor(237,237,240);doc.rect(M,y,W-M*2,h,'F');}
+   cells.forEach((c,j)=>{doc.rect(M+j*cw,y,cw,h);c.forEach((l,q)=>doc.text(l,M+j*cw+pad,y+pad+size*.85+q*lh));});
    y+=h;
   });
-  y+=16;
+  y+=12;
  };
- const rule=()=>{room(26);y+=12;stroke(pal.line);doc.setLineWidth(1);doc.line(M,y,W-M,y);y+=16;};
- if(isCover){
-  fill(pal.accent);doc.rect(0,0,W,12,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(9);ink(pal.accent);
-  doc.text('LITHIUM · LIMINAL',M,M+30);
-  const tl=wrap(title||'Documento',34,CW).slice(0,6);
-  let cy=H*0.36;
-  ink(pal.ink);
-  tl.forEach(l=>{doc.text(l,M,cy);cy+=40;});
-  fill(pal.accent);doc.rect(M,cy+2,72,4,'F');
-  const sub=blocks.find(b=>b.t==='p'&&b.x.length>60);
-  if(sub){
-   doc.setFont('helvetica','normal');ink(pal.grey);
-   wrap(sub.x,12,CW*0.84).slice(0,3).forEach((l,k)=>doc.text(l,M,cy+34+k*18));
-  }
-  fill(pal.soft);doc.rect(0,H-136,W,136,'F');
-  fill(pal.accent);doc.rect(0,H-136,W,4,'F');
-  doc.setFont('helvetica','normal');doc.setFontSize(10);ink(pal.grey);
-  doc.text(new Date().toLocaleDateString('es-VE',{day:'numeric',month:'long',year:'numeric'}),M,H-98);
-  doc.text('Hecho con Lithium · Liminal',M,H-78);
-  doc.addPage();y=TOP;
- }
- blocks.forEach(b=>{if(b.t==='table')table(b.rows);else if(b.t==='h')head(b.x,b.lv||2);else if(b.t==='li')bullet(b.x,b.n);else if(b.t==='q')quote(b.x);else if(b.t==='hr')rule();else para(b.x);});
- const total=doc.getNumberOfPages(),from=isCover?2:1;
- for(let p=from;p<=total;p++){
-  doc.setPage(p);
-  stroke(pal.line);doc.setLineWidth(.7);
-  doc.line(M,50,W-M,50);doc.line(M,H-46,W-M,H-46);
-  doc.setFont('helvetica','normal');doc.setFontSize(8);ink(pal.grey);
-  doc.text(wrap(title||'',8,CW*0.72)[0]||'',M,42);
-  doc.text('Lithium · Liminal',M,H-32);
-  doc.text(`${p} / ${total}`,W-M,H-32,{align:'right'});
- }
+ if(!isDoc){doc.setTextColor(110);put(`${MODEL_NAME} · Liminal`,9,'normal',0,8);}
+ doc.setTextColor(29);put(title,isDoc?20:18,'bold',0,12);
+ blocks.forEach(b=>{if(b.t==='table')table(b.rows);else if(b.t==='h'){room(40);y+=4;put(b.x,b.lv<=2?14:12.5,'bold',0,4);}else if(b.t==='li')put((b.n?b.n+'. ':'• ')+b.x,11,'normal',14,3);else if(b.t==='q'){doc.setTextColor(80);put(b.x,11,'italic',14,6);doc.setTextColor(29);}else put(b.x,11,'normal',0,6);});
  await download(doc.output('blob'),fileBase(title)+'.pdf');
 }
 const DOCX_STYLES='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/><w:color w:val="1D1D1F"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="es-VE"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="140" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'
@@ -1692,25 +1543,6 @@ function docCardHTML(d,i,c,ask){
  const pdfFirst=/\bpdf\b/i.test(asked)&&!/\bword\b|docx/i.test(asked);
  const b=(fmt,primary)=>`<button class="btn sm${primary?' primary':''}" data-action="doc-dl" data-i="${i}" data-val="${fmt}">${ic('download','sm')}${fmt==='pdf'?'PDF':'Word'}</button>`;
  return `<div class="doc-card"><span class="doc-ic">${ic('file')}</span><span class="doc-t"><b>${esc(d.title)}</b><span>Documento · ${nf(d.words)} palabras</span></span><div class="doc-btns">${pdfFirst?b('pdf',true)+b('docx'):b('docx',true)+b('pdf')}<button class="btn sm" data-action="open-editor" data-val="${i}">${ic('edit','sm')}Editar</button></div></div>`;
-}
-/** The answer came as a web page but the person asked for a PDF: offer the file. */
-const askOf=(c,i)=>((c.messages[i-1]||{}).text||'');
-function askedPdf(c,i){
- for(let k=i-1;k>=0&&k>=i-6;k--){const m=c.messages[k];if(m&&m.role==='user'&&/\bpdf\b/i.test(m.text||''))return true;}
- return false;
-}
-function pagePdfCardHTML(a,i,n){
- return `<div class="doc-card"><span class="doc-ic">${ic('file')}</span><span class="doc-t"><b>${esc(a.title||'Tu documento')}</b><span>Quedó como ${esc(AF_NAME[a.kind]||'página')} · descárgalo en PDF A4</span></span><div class="doc-btns"><button class="btn sm primary" data-action="artifact-pdf" data-i="${i}" data-n="${n}">${ic('download','sm')}PDF</button></div></div>`;
-}
-/** The card under an answer: a document, the page they can turn into a PDF, or the last document they asked for. */
-function fileCardFor(m,i,c){
- const d=docOf(m.text);
- if(d)return docCardHTML(d,i,c);
- if(askedPdf(c,i)){
-  const list=artifactsOf(m.text),n=list.findIndex(a=>a.kind==='page'||a.kind==='slides');
-  if(n>=0)return pagePdfCardHTML(list[n],i,n);
- }
- return askedFile(c,i)?prevDocCard(c,i):'';
 }
 function openEditor(title,html,src){
  U.editSrc=src;U.editTitle=title;
@@ -2147,7 +1979,7 @@ function msgHTML(m,i,c){
  if(m.pending)think=`<div class="thinking-live"><span class="pulse"><i></i><i></i><i></i></span><span class="shimmer">${m.web?'Buscando en internet…':m.reading?'Leyendo tus archivos…':m.tier==='adv'?`Pensando con esfuerzo ${EFF[m.effort].name.toLowerCase()}…`:'Escribiendo…'}</span></div>`;
  else if(m.thinking&&S.prefs.showThinking)think=`<details class="think"><summary>${ic('brain','sm')}Razonó durante ${m.thinking} s${ic('chevr','xs chev-rot')}</summary><div class="think-body">${(m.thought||[]).map(t=>`<span>${esc(t)}</span>`).join('')}</div></details>`;
  const actions=(!m.pending&&!m.streaming)?`<div class="msg-actions"><button class="act" data-action="copy-msg" data-i="${i}" aria-label="Copiar respuesta">${ic('copy','sm')}</button><button class="act" data-action="export-menu" data-i="${i}" aria-haspopup="true" aria-label="Exportar o editar">${ic('download','sm')}</button>${isLast?`<button class="act" data-action="regen" aria-label="Volver a generar">${ic('refresh','sm')}</button>`:''}<button class="act up ${m.fb==='up'?'on':''}" data-action="fb" data-i="${i}" data-val="up" aria-label="Buena respuesta" aria-pressed="${m.fb==='up'}">${ic('thumb','sm')}</button><button class="act down ${m.fb==='down'?'on':''}" data-action="fb" data-i="${i}" data-val="down" aria-label="Mala respuesta" aria-pressed="${m.fb==='down'}">${ic('thumb','sm flip')}</button></div>`:'';
- return `<div class="msg bot" data-i="${i}"><div class="bot-head">${mark()}<b>${MODEL_NAME}</b><span>${esc(metaOf(m))}</span>${m.edited?'<span class="edited-tag">· editado</span>':''}</div>${think}${m.reconnecting?'<div class="thinking-live"><span class="pulse"><i></i><i></i><i></i></span><span class="shimmer">Reconectando…</span></div>':''}${toolsHTML(m)}${m.pending?'':`<div class="md">${md(m.text,{i,n:0,streaming:!!m.streaming})}${m.streaming?'<span class="caret" aria-hidden="true"></span>':''}</div>`}${m.ask&&!m.streaming?askHTML(m,i):''}${m.notice&&!m.streaming?`<div class="cut-note">${ic('refresh','sm')}<span>${esc(m.notice)}</span>${isLast&&(!m.noticeKind||m.noticeKind==='cut')?'<button class="btn sm" data-action="continue-answer">Continuar</button>':''}</div>`:''}${!m.pending&&!m.streaming?sourcesHTML(m):''}${!m.pending&&!m.streaming&&!m.stopped?fileCardFor(m,i,c):''}${!m.pending&&!m.streaming&&m.memNew?`<div class="mem-chip">${ic('brain','sm')}<span>Memoria actualizada: «${esc(m.memNew.text)}»</span><button class="link-btn" data-action="undo-mem" data-i="${i}">Deshacer</button></div>`:''}${actions}</div>`;
+ return `<div class="msg bot" data-i="${i}"><div class="bot-head">${mark()}<b>${MODEL_NAME}</b><span>${esc(metaOf(m))}</span>${m.edited?'<span class="edited-tag">· editado</span>':''}</div>${think}${m.reconnecting?'<div class="thinking-live"><span class="pulse"><i></i><i></i><i></i></span><span class="shimmer">Reconectando…</span></div>':''}${toolsHTML(m)}${m.pending?'':`<div class="md">${md(m.text,{i,n:0,streaming:!!m.streaming})}${m.streaming?'<span class="caret" aria-hidden="true"></span>':''}</div>`}${m.ask&&!m.streaming?askHTML(m,i):''}${m.notice&&!m.streaming?`<div class="cut-note">${ic('refresh','sm')}<span>${esc(m.notice)}</span>${isLast&&(!m.noticeKind||m.noticeKind==='cut')?'<button class="btn sm" data-action="continue-answer">Continuar</button>':''}</div>`:''}${!m.pending&&!m.streaming?sourcesHTML(m):''}${!m.pending&&!m.streaming&&!m.stopped?(docOf(m.text)?docCardHTML(docOf(m.text),i,c):askedFile(c,i)?prevDocCard(c,i):''):''}${!m.pending&&!m.streaming&&m.memNew?`<div class="mem-chip">${ic('brain','sm')}<span>Memoria actualizada: «${esc(m.memNew.text)}»</span><button class="link-btn" data-action="undo-mem" data-i="${i}">Deshacer</button></div>`:''}${actions}</div>`;
 }
 function renderChat(){
  const c=curChat();if(!c){U.view='home';return renderHome();}
@@ -2669,12 +2501,13 @@ function answerAsk(i,approved,always){
 /* ---------- Live pages, apps and presentations (like artifacts) ----------
    A complete HTML file in an answer becomes a card; it opens in a side panel (full screen on phones)
    with a live preview, the code, download and full screen. */
-const AF_NAME={page:'Página web',slides:'Presentación',svg:'Imagen SVG'};
+const AF_NAME={page:'Página web',slides:'Presentación',svg:'Imagen SVG',pdf:'PDF'};
 function artifactKind(lang,src){
  const l=(lang||'').toLowerCase();
  if((l==='svg'||l==='xml')&&/<svg[\s>]/i.test(src))return 'svg';
  if((l==='html'||l==='htm'||l==='')&&/<!doctype html|<html[\s>]/i.test(src)){
   const title=(src.match(/<title[^>]*>([^<]*)/i)||[])[1]||'';
+  if(isPrintDoc(src))return 'pdf';
   return /class=["'][^"']*\b(slide|slides|diapositiva)\b/i.test(src)||/presentaci[oó]n|\bslides?\b|diapositivas/i.test(title)?'slides':'page';
  }
  return null;
@@ -2698,9 +2531,64 @@ function artifactsOf(text){
  }
  return out;
 }
+/* ---------- PDFs with design: Lithium writes them as print-ready HTML, the person gets a PDF ---------- */
+const isPrintDoc=src=>/<meta[^>]+liminal-entrega[^>]+pdf/i.test(src)||/@page\s*\{[^}]*size\s*:\s*(a4|letter|carta|legal)/i.test(src);
+function pdfCardHTML(a,i,n){
+ return `<div class="doc-card pdf-card"><span class="doc-ic">${ic('file')}</span><span class="doc-t"><b>${esc(a.title)}</b><span>PDF · listo para descargar</span></span><div class="doc-btns"><button class="btn sm primary" data-action="art-pdf" data-i="${i}" data-n="${n}">${ic('download','sm')}Descargar PDF</button><button class="btn sm" data-action="open-artifact" data-i="${i}" data-n="${n}">${ic('eye','sm')}Ver</button></div></div>`;
+}
+/** Finds a row near `from` (going up) where the page is blank, so a sheet never cuts through a line of text. */
+function pdfBlankRow(cv,from,range){
+ const ctx=cv.getContext('2d');
+ for(let y=from;y>from-range&&y>0;y--){
+  const row=ctx.getImageData(0,y,cv.width,1).data;let same=true;
+  for(let x=4;x<row.length;x+=16){if(Math.abs(row[x]-row[0])>6||Math.abs(row[x+1]-row[1])>6||Math.abs(row[x+2]-row[2])>6){same=false;break;}}
+  if(same)return y;
+ }
+ return 0;
+}
+let pdfBusy=false;
+async function htmlToPDF(html,title){
+ if(pdfBusy)return;pdfBusy=true;
+ toast('Preparando el PDF…');
+ const fr=document.createElement('iframe');
+ try{
+  await Promise.all([loadLib('jspdf'),loadLib('h2c')]);
+  // Drawn without running scripts: the page only has to look right on paper.
+  fr.setAttribute('sandbox','allow-same-origin');
+  fr.setAttribute('aria-hidden','true');
+  fr.style.cssText='position:fixed;left:-12000px;top:0;width:794px;height:1123px;border:0';
+  fr.srcdoc=html;document.body.appendChild(fr);
+  await new Promise(r=>{fr.onload=r;setTimeout(r,5000);});
+  const doc=fr.contentDocument;
+  try{await doc.fonts.ready;}catch(e){}
+  await new Promise(r=>setTimeout(r,250));
+  const {jsPDF}=window.jspdf,pdf=new jsPDF({unit:'mm',format:'a4',compress:true}),W=210,H=297;
+  const shoot=el=>window.html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff',windowWidth:794,logging:false});
+  const sheets=[...doc.querySelectorAll('section.pagina,.pagina,.page,.hoja,[data-pagina]')].filter(el=>el.offsetHeight>40&&!el.parentElement.closest('.pagina,.page,.hoja'));
+  let count=0;
+  if(sheets.length){
+   for(const el of sheets){const cv=await shoot(el);if(count++)pdf.addPage();pdf.addImage(cv.toDataURL('image/jpeg',.92),'JPEG',0,0,W,Math.min(H,cv.height*W/cv.width));}
+  }else{
+   const cv=await shoot(doc.body),pageH=Math.floor(cv.width*H/W);let y=0;
+   while(y<cv.height-8){
+    let end=Math.min(cv.height,y+pageH);
+    if(end<cv.height)end=pdfBlankRow(cv,end,Math.floor(pageH*.18))||end;
+    const part=document.createElement('canvas');part.width=cv.width;part.height=end-y;
+    part.getContext('2d').drawImage(cv,0,y,cv.width,end-y,0,0,cv.width,end-y);
+    if(count++)pdf.addPage();pdf.addImage(part.toDataURL('image/jpeg',.92),'JPEG',0,0,W,(end-y)*W/cv.width);y=end;
+   }
+  }
+  const name=fileBase(title||'documento');
+  await download(pdf.output('blob'),name+'.pdf');
+  toast(`Listo: ${name}.pdf (${count} ${count===1?'página':'páginas'}).`);
+ }catch(e){
+  toast(blockedHere()?'Esta vista previa no deja crear el PDF. Pruébalo en la app.':'No pude crear el PDF. Revisa la conexión e inténtalo otra vez.');
+ }finally{fr.remove();pdfBusy=false;}
+}
 function artifactCardHTML(a,i,n,streaming){
  const writing=streaming&&!a.closed;
- return `<button type="button" class="artifact-card${writing?' writing':''}" data-action="open-artifact" data-i="${i}" data-n="${n}"><span class="af-ic">${writing?'<span class="pulse"><i></i><i></i><i></i></span>':ic(a.kind==='slides'?'slides':a.kind==='svg'?'image':'code')}</span><span class="af-t"><b>${esc(a.title)}</b><span>${AF_NAME[a.kind]} · ${writing?`escribiendo… ${nf(a.lines)} líneas`:`${nf(a.lines)} líneas`}</span></span><span class="af-go">${writing?'Ver código':'Abrir'}</span></button>`;
+ if(a.kind==='pdf'&&!writing)return pdfCardHTML(a,i,n);
+ return `<button type="button" class="artifact-card${writing?' writing':''}" data-action="open-artifact" data-i="${i}" data-n="${n}"><span class="af-ic">${writing?'<span class="pulse"><i></i><i></i><i></i></span>':ic(a.kind==='slides'?'slides':a.kind==='svg'?'image':a.kind==='pdf'?'file':'code')}</span><span class="af-t"><b>${esc(a.title)}</b><span>${AF_NAME[a.kind]} · ${writing?`escribiendo… ${nf(a.lines)} líneas`:`${nf(a.lines)} líneas`}</span></span><span class="af-go">${writing?'Ver código':'Abrir'}</span></button>`;
 }
 function openArtifact(c,i,n,tab){
  const m=c&&c.messages[i];if(!m)return;
@@ -2742,7 +2630,6 @@ function artifactDoc(p){return p.kind==='svg'?`<!doctype html><html><head><meta 
 function artifactPanelHTML(p){
  return `<div class="pn-head"><span class="af-ic">${ic(p.kind==='slides'?'slides':p.kind==='svg'?'image':'code','sm')}</span><div class="pn-title"><b>${esc(p.title)}</b><span id="pn-sub">${panelSub(p)}</span></div><button class="icon-btn" data-action="panel-close" aria-label="Cerrar">${ic('x')}</button></div>
  <div class="pn-tabs"><div class="seg" role="radiogroup" aria-label="Ver"><button role="radio" aria-checked="${p.tab==='preview'}" data-action="panel-tab" data-val="preview" ${p.closed?'':'disabled'}>Vista previa</button><button role="radio" aria-checked="${p.tab==='code'}" data-action="panel-tab" data-val="code">Código</button></div><span class="grow"></span>
- ${p.kind==='page'||p.kind==='slides'?`<button class="icon-btn" data-action="panel-pdf" aria-label="Descargar como PDF" title="Descargar como PDF">${ic('file')}</button>`:''}
  <button class="icon-btn" data-action="panel-copy" aria-label="Copiar el código" title="Copiar el código">${ic('copy')}</button>
  <button class="icon-btn" data-action="panel-download" aria-label="Descargar el archivo" title="Descargar">${ic('download')}</button>
  <button class="icon-btn hide-sm" data-action="panel-newtab" aria-label="Abrir en otra pestaña" title="Abrir en otra pestaña" ${p.closed?'':'disabled'}>${ic('external')}</button>
@@ -3458,7 +3345,6 @@ const A={
  'panel-close':()=>{U.panel=null;paintPanel();},
  'panel-tab':el=>{const p=U.panel;if(!p)return;p.tab=el.dataset.val;paintPanel();},
  'panel-copy':()=>{const p=U.panel;if(p&&p.code)copyText(p.code,'Código copiado');},
- 'panel-pdf':()=>{const p=U.panel;if(p&&p.code)exportPagePDF(p.code,p.title);},
  'panel-download':()=>{const p=U.panel;if(!p||!p.code)return;const svg=p.kind==='svg';download(new Blob([p.code],{type:svg?'image/svg+xml':'text/html'}),fileBase(p.title)+(svg?'.svg':'.html'));},
  'panel-newtab':()=>{const p=U.panel;if(!p||!p.code)return;const url=URL.createObjectURL(new Blob([artifactDoc(p)],{type:'text/html'}));const w=window.open(url,'_blank');if(!w)toast('Tu navegador bloqueó la pestaña nueva. Usa Descargar.');setTimeout(()=>URL.revokeObjectURL(url),60e3);},
  'panel-full':()=>{const box=$('#panel'),f=$('#pn-frame');const req=f&&(f.requestFullscreen||f.webkitRequestFullscreen);if(req){try{const r=req.call(f);if(r&&r.catch)r.catch(()=>box.classList.toggle('pn-max'));}catch(e){box.classList.toggle('pn-max');}}else if(box)box.classList.toggle('pn-max');},
@@ -3512,14 +3398,14 @@ const A={
  'conn-toggle':el=>{const k=el.dataset.val;S.connectors[k]=!S.connectors[k];save();renderSettings(true);const n=CONNECTORS.find(x=>x[0]===k)[1];toast(S.connectors[k]?`Demostración: con el servidor, aquí autorizarías ${n}`:`Desconectaste ${n}`);},
  'mcp-del':el=>{S.customMcp=S.customMcp.filter(x=>x.id!==el.dataset.val);save();renderSettings(true);toast('Conector quitado');},
  'export-menu':el=>openPop(el,'export:'+el.dataset.i,exportMenu(el.dataset.i)),
-  'export-pdf':el=>{closePop();const c=curChat();const m=c.messages[+el.dataset.val];exportPDF(blocksFromMd(m.text),c.title,{colorText:askOf(c,+el.dataset.val)+' '+m.text.slice(0,200)});},
+ 'export-pdf':el=>{closePop();const c=curChat();const m=c.messages[+el.dataset.val];exportPDF(blocksFromMd(m.text),c.title);},
  'export-docx':el=>{closePop();const c=curChat();const m=c.messages[+el.dataset.val];exportDOCX(blocksFromMd(m.text),c.title);},
  'open-editor':el=>{closePop();const c=curChat();const i=+el.dataset.val;const d=docOf(c.messages[i].text);openEditor(d?d.title:c.title,md(c.messages[i].text),{chat:c.id,i});},
-  'doc-dl':el=>{const c=curChat();const m=c&&c.messages[+el.dataset.i];if(!m)return;const b=blocksFromMd(docSource(m.text));if(el.dataset.val==='pdf')exportPDF(b,c.title,{colorText:askOf(c,+el.dataset.i)+' '+m.text.slice(0,200)});else exportDOCX(b,c.title);},
-  'artifact-pdf':el=>{const c=curChat();const m=c&&c.messages[+el.dataset.i];const a=m&&artifactsOf(m.text)[+el.dataset.n];if(a)exportPagePDF(a.code,a.title);},
+ 'art-pdf':el=>{const c=curChat();const m=c&&c.messages[+el.dataset.i];const a=m&&artifactsOf(m.text)[+el.dataset.n];if(a)htmlToPDF(a.code,a.title);},
+ 'doc-dl':el=>{const c=curChat();const m=c&&c.messages[+el.dataset.i];if(!m)return;const b=blocksFromMd(docSource(m.text));if(el.dataset.val==='pdf')exportPDF(b,c.title);else exportDOCX(b,c.title);},
  'edit-file':el=>{const c=curChat();const m=c.messages[+el.dataset.i];const f=(m.files||[]).find(x=>x.id===el.dataset.val);if(!f)return;openEditor(f.name,f.text.split(/\n+/).filter(Boolean).map(l=>`<p>${esc(l)}</p>`).join(''),null);},
  'ed-cmd':el=>{const v=el.dataset.val,a=$('#ed-area');if(!a)return;a.focus();if(v==='bold'||v==='italic')document.execCommand(v);else if(v==='ul')document.execCommand('insertUnorderedList');else document.execCommand('formatBlock',false,'<'+v+'>');},
- 'ed-export':el=>{const a=$('#ed-area');if(!a)return;const b=blocksFromHtml(a);if(!b.length){toast('El documento está vacío.');return;}if(el.dataset.val==='pdf')exportPDF(b,U.editTitle,{colorText:U.editTitle||''});else exportDOCX(b,U.editTitle);},
+ 'ed-export':el=>{const a=$('#ed-area');if(!a)return;const b=blocksFromHtml(a);if(!b.length){toast('El documento está vacío.');return;}if(el.dataset.val==='pdf')exportPDF(b,U.editTitle);else exportDOCX(b,U.editTitle);},
  'ed-save':()=>{const a=$('#ed-area'),src=U.editSrc;if(!a||!src)return;const c=chatById(src.chat);const m=c&&c.messages[src.i];if(!m)return;m.text=mdFromBlocks(blocksFromHtml(a));m.edited=true;save();closeModal();if(U.view==='chat'&&U.chatId===c.id)renderChat();toast('Cambios guardados');},
  'undo-mem':el=>{const c=curChat();const m=c.messages[+el.dataset.i];if(!m||!m.memNew)return;S.memories=S.memories.filter(x=>x.id!==m.memNew.id);delete m.memNew;save();updateMsg(c,+el.dataset.i);toast('Lithium no recordará ese dato');},
  'edit-mem':el=>{const m=S.memories.find(x=>x.id===el.dataset.id);if(!m)return;promptModal({title:'Editar recuerdo',label:'Recuerdo',value:m.text,ok:'Guardar',form:'mem-edit',id:m.id});},
@@ -3631,7 +3517,9 @@ const LD_CMDS=[
  ['plan','Modo plan','Propone un plan antes de tocar archivos','tasks',null],
  ['nueva','Nueva sesión','Una conversación limpia en este proyecto','compose',null],
  ['deshacer','Deshacer la última tarea','Los archivos vuelven a como estaban','undo',null],
- ['zip','Descargar el proyecto','El ZIP y cada archivo, aquí en el chat','download',null],
+ ['exportar','Exportar ZIP','Descarga el proyecto','download',null],
+ ['volver','Volver a un punto','Restaura el proyecto a como estaba antes de cualquier tarea','undo',null],
+ ['cambios','Descargar cambios','ZIP solo con lo que cambió la última tarea','download',null],
 ];
 const LD_BIN=/\.(png|jpe?g|gif|webp|avif|ico|bmp|mp3|wav|ogg|m4a|mp4|webm|mov|woff2?|ttf|otf|eot|pdf|zip|gz|wasm)$/i;
 const LD_MIME={html:'text/html',htm:'text/html',css:'text/css',js:'text/javascript',mjs:'text/javascript',json:'application/json',svg:'image/svg+xml',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',avif:'image/avif',ico:'image/x-icon',bmp:'image/bmp',mp3:'audio/mpeg',wav:'audio/wav',ogg:'audio/ogg',m4a:'audio/mp4',mp4:'video/mp4',webm:'video/webm',mov:'video/quicktime',woff:'font/woff',woff2:'font/woff2',ttf:'font/ttf',otf:'font/otf',pdf:'application/pdf',txt:'text/plain',md:'text/markdown',py:'text/x-python',csv:'text/csv',xml:'application/xml',wasm:'application/wasm'};
@@ -4168,7 +4056,7 @@ function ldHistory(p,bot){
   if(m.role==='user'){let c=(m.plan?LD_PLAN:'')+(m.prompt||m.text);if(m===p.chat[p.chat.indexOf(bot)-1]&&m.at)m.at.forEach(f=>{if(p.files[f]!=null&&!ldIsData(p.files[f]))c+=`
 
 [Archivo mencionado: ${f}]
-${ldNumbered(p.files[f],1,400).text.slice(0,14000)}`;});if(c.trim())out.push({role:'user',content:c.slice(0,40000)});continue;}
+${ldNumbered(p.files[f],1,400).text.slice(0,14000)}`;});out.push({role:'user',content:c.slice(0,40000)});continue;}
   let t=ldBotText(m);if(m.changed&&m.changed.length)t+=`\n\n(Archivos que cambié en esa tarea: ${m.changed.slice(0,30).join(', ')}${m.undone?'. La persona deshizo esos cambios.':''})`;
   if(m.stopped&&!t)t='(La persona detuvo esta tarea antes de terminar.)';
   if(m.error&&!t)t='(Esta tarea se cortó: '+m.error+')';
@@ -4311,7 +4199,7 @@ async function ldSend(given,opts){
  const at=[...new Set((text.match(/@([\w./-]+)/g)||[]).map(x=>x.slice(1).replace(/[.,;:]+$/,'')).filter(f=>p.files[f]!=null))];
  const user=Object.assign({role:'user',text:text||'',ts:Date.now()},plan?{plan:true}:{},at.length?{at}:{},opts.cmd?{cmd:opts.cmd,prompt:opts.prompt+(text?`\n\nEnfócate en: ${text}`:'')}:{});
  p.chat.push(user);
-  const bot=Object.assign({role:'bot',items:[],ts:Date.now(),tier,effort,checkpoint:cp.id},plan?{plan:true}:{},ldWantsFiles(text)?{give:true}:{});
+ const bot=Object.assign({role:'bot',items:[],ts:Date.now(),tier,effort,checkpoint:cp.id},plan?{plan:true}:{});
  p.chat.push(bot);if(p.chat.length>200)p.chat.splice(0,p.chat.length-200);
  LD.draft='';LD.popItems=null;p.todo=[];
  await ldRun(p,bot,[]);
@@ -4322,7 +4210,9 @@ function ldCommand(key,rest){
  if(c[4]){ldSend(rest||'',{cmd:key,prompt:c[4],title:c[1]});return;}
  if(key==='plan'){S.prefs.devMode='plan';save();ldPaintComposer();toast('Modo plan: Lithium investigará y te propondrá un plan antes de tocar archivos.');}
  else if(key==='nueva')ldNewSession(p);
- else if(key==='zip')ldDeliver(p);
+ else if(key==='exportar')ldExport(p);
+ else if(key==='volver')ldRewind(p);
+ else if(key==='cambios'){let i=-1;p.chat.forEach((m,k)=>{if(m.role==='bot'&&(m.changed||[]).length)i=k;});if(i<0)toast('Todavía no hay cambios en esta sesión.');else ldDownloadChanges(i);}
  else if(key==='deshacer'){let i=-1;p.chat.forEach((m,k)=>{if(m.role==='bot'&&(m.changed||[]).length&&!m.undone)i=k;});if(i<0)toast('No hay cambios para deshacer en esta sesión.');else ldUndo(i);}
 }
 function ldNewSession(p){
@@ -4517,39 +4407,88 @@ async function ldImportGitHub(input){
   toast(`Importaste ${Object.keys(r.files).length} archivos de ${owner}/${repo}${tree.length>300?' (los primeros 300)':''}.`);
  }catch(e){toast(e&&e.message&&e.name!=='TypeError'?e.message:'No pude conectarme con GitHub. Revisa tu conexión.');}
 }
+/* ---------- Liminal Dev: several ZIPs, drag and drop, downloads and going back to any point ---------- */
+async function ldReadZip(file){
+ const entries=await ldUnzip(await file.arrayBuffer());
+ return ldFilesFrom(entries.map(en=>({name:en.name,usize:en.usize,read:()=>ldInflate(en)})));
+}
+const ldIsZip=f=>/\.zip$/i.test(f.name)||/zip/.test(f.type||'');
+const ldZipDir=f=>ldPath(f.name.replace(/\.zip$/i,''))||'zip';
+/** One ZIP opens as a project; several become one project with a folder for each. */
+async function ldImportZips(list){
+ const zips=list.filter(ldIsZip);
+ if(!zips.length){toast('Elige uno o varios archivos ZIP.');return;}
+ if(zips.length===1)return ldImportZip(zips[0]);
+ try{
+  toast(`Abriendo ${zips.length} ZIP…`);
+  const all={};let skipped=0;
+  for(const z of zips){const r=await ldReadZip(z);for(const [k,v] of Object.entries(r.files))all[ldZipDir(z)+'/'+k]=v;skipped+=r.skipped||0;}
+  const n=Object.keys(all).length;
+  if(!n){toast('Esos ZIP no tienen archivos de código que pueda abrir.');return;}
+  const names=zips.map(z=>z.name.replace(/\.zip$/i,''));
+  const p=ldNew(names.slice(0,3).join(' + ')+(names.length>3?` y ${names.length-3} más`:''),null,all);
+  ldOpen(p);if(U.view!=='dev')go('dev');else{renderDev();renderSidebar();renderTopbar();}
+  toast(`Importaste ${zips.length} ZIP con ${n} archivos, cada uno en su carpeta${skipped?` (omití ${skipped} muy grandes o binarios)`:''}.`);
+ }catch(e){toast(e.message||'No pude abrir esos ZIP.');}
+}
+/** Files dropped or uploaded into an open project: a ZIP is unpacked into a folder with its name. */
+async function ldAddToProject(list){
+ const p=LD.cur;if(!p)return ldImportZips(list);
+ const zips=list.filter(ldIsZip),rest=list.filter(f=>!ldIsZip(f));let n=0;
+ try{for(const z of zips){const r=await ldReadZip(z);for(const [k,v] of Object.entries(r.files)){p.files[ldZipDir(z)+'/'+k]=v;n++;}}}
+ catch(e){toast(e.message||'No pude abrir ese ZIP.');}
+ if(n){ldSave(p,true);renderDev();}
+ if(rest.length)await ldUpload(rest);
+ else if(n)toast(`Agregaste ${n} archivos de ${zips.length} ZIP.`);
+}
+/* Drag files, folders or ZIPs onto Liminal Dev. */
+document.addEventListener('dragover',e=>{if(U.view!=='dev'||!e.dataTransfer||![...e.dataTransfer.types].includes('Files'))return;e.preventDefault();e.stopPropagation();document.body.classList.add('ld-dropping');},true);
+document.addEventListener('dragleave',e=>{if(!e.relatedTarget)document.body.classList.remove('ld-dropping');},true);
+document.addEventListener('drop',e=>{
+ document.body.classList.remove('ld-dropping');
+ if(U.view!=='dev'||!e.dataTransfer||!e.dataTransfer.files.length)return;
+ e.preventDefault();e.stopPropagation();ldAddToProject([...e.dataTransfer.files]);
+},true);
+
+async function ldBlobOf(path,v){return ldIsData(v)?await (await fetch(v)).blob():new Blob([String(v)],{type:ldMime(path)});}
+async function ldDownloadFile(path){
+ const p=LD.cur;if(!p||!(path in p.files))return;
+ await download(await ldBlobOf(path,p.files[path]),path.split('/').pop());
+}
+const ldSafeName=t=>String(t||'proyecto').replace(/[\\/:*?"<>|]+/g,'').trim()||'proyecto';
+async function ldDownloadFolder(path){
+ const p=LD.cur;if(!p)return;
+ const dir=path.includes('/')?path.slice(0,path.lastIndexOf('/')+1):'';
+ if(!dir)return ldExport(p);
+ const files={};for(const k of Object.keys(p.files))if(k.startsWith(dir))files[k.slice(dir.length)]=p.files[k];
+ await download(ldZip(files),ldSafeName(dir.slice(0,-1).split('/').pop())+'.zip');
+}
+/** Only what a task changed, ready to copy into another copy of the project. */
+async function ldDownloadChanges(i){
+ const p=LD.cur,m=p&&p.chat[i];if(!m)return;
+ const files={};for(const f of m.changed||[])if(f in p.files)files[f]=p.files[f];
+ if(!Object.keys(files).length){toast('Esa tarea solo borró archivos: no hay nada que descargar.');return;}
+ await download(ldZip(files),ldSafeName(p.name)+'-cambios.zip');
+}
+/** Every saved point, newest first; going back keeps a point of the current state, so it can be undone too. */
+function ldRewind(p){
+ if(LD.running){toast('Espera a que termine la tarea o detenla.');return;}
+ const list=[...(p.checkpoints||[])].reverse();
+ if(!list.length){toast('Todavía no hay puntos guardados: se guarda uno antes de cada tarea.');return;}
+ const when=t=>new Date(t).toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+ modal(`<div class="modal-head"><h2>Volver a un punto</h2><button class="icon-btn" data-action="close-modal" aria-label="Cerrar">${ic('x')}</button></div>
+ <p class="muted" style="margin:0 0 10px">Los archivos vuelven a como estaban justo antes de esa tarea. Antes de volver guardo cómo están ahora, así que también puedes regresar.</p>
+ <div class="ld-points">${list.map(c=>`<div class="ld-point"><span class="ld-point-t"><b>${esc(c.label||'Tarea')}</b><span>${when(c.ts)} · ${nf(Object.keys(c.files).length)} archivos</span></span><button class="btn sm" data-action="ld-rewind-to" data-id="${c.id}">${ic('undo','xs')}Volver aquí</button></div>`).join('')}</div>`,{label:'Volver a un punto'});
+}
+function ldRewindTo(id){
+ const p=LD.cur,cp=p&&(p.checkpoints||[]).find(c=>c.id===id);if(!cp)return;
+ ldCheckpoint(p,'Antes de volver a «'+cp.label+'»');
+ p.files=Object.assign({},cp.files);
+ p.chat.forEach(m=>{const c=m.role==='bot'&&p.checkpoints.find(x=>x.id===m.checkpoint);if(c&&c.ts>=cp.ts&&(m.changed||[]).length)m.undone=true;});
+ LD.open=LD.open.filter(f=>f in p.files);if(LD.file&&!(LD.file in p.files))LD.file=LD.open[0]||null;
+ closeModal();ldSave(p,true);renderDev();toast('Listo: el proyecto volvió a ese punto.');
+}
 async function ldExport(p){await download(ldZip(p.files),(p.name.replace(/[\\/:*?"<>|]+/g,'').trim()||'proyecto')+'.zip');}
-/* ---------- Handing files over in the chat ----------
-   Each answer that touched files wears its own download row: the whole project as a ZIP and
-   every file loose, so what Lithium made leaves the device without leaving the conversation. */
-const ldWantsFiles=t=>/\bzip\b|desc[aá]rg|comprimid|p[aá]same|p[aá]salos|dame los archivos/i.test(String(t||''));
-const ldKb=n=>n<1024?n+' B':n<1048576?Math.round(n/1024)+' KB':(n/1048576).toFixed(1)+' MB';
-function ldFileBlob(v,path){return ldIsData(v)?new Blob([ldBytes(v)],{type:ldMime(path)}):new Blob([String(v)],{type:ldMime(path)+';charset=utf-8'});}
-async function ldDownloadPath(path){
- const p=LD.cur;
- if(!p||p.files[path]==null){toast('Ese archivo ya no está en el proyecto.');return;}
- await download(ldFileBlob(p.files[path],path),path.split('/').pop()||'archivo');
-}
-/** The ZIP of the project, offered right here in the conversation. */
-function ldDeliver(p){
- if(!p)return;
- if(LD.running){toast('Espera a que termine la tarea y vuelve a pedirlo.');return;}
- const paths=Object.keys(p.files).sort();
- if(!paths.length){toast('Este proyecto todavía no tiene archivos.');return;}
- const total=paths.reduce((n,f)=>n+ldSize(p.files[f]),0);
- p.chat.push({role:'user',cmd:'zip',text:'',ts:Date.now()});
- p.chat.push({role:'bot',give:true,ts:Date.now(),items:[{type:'text',text:`Aquí tienes **${p.name}**: ${paths.length} archivo${paths.length>1?'s':''} y ${ldKb(total)} en total. Baja el ZIP completo o un archivo suelto; el ZIP se sube a GitHub tal cual.`}]});
- ldSave(p,true);renderDev();
-}
-/** The download row of one answer: nothing for plain explanations. */
-function ldGiveHTML(m,p){
- if(m.role!=='bot'||m.running||!(m.give||(m.changed||[]).length))return '';
- const paths=Object.keys(p.files);
- if(!paths.length)return '';
- const files=[...new Set(m.give?paths:(m.changed||[]))].filter(f=>f&&p.files[f]!=null);
- if(!files.length)return '';
- const total=paths.reduce((n,f)=>n+ldSize(p.files[f]),0),max=m.give?10:6,shown=files.slice(0,max),rest=files.length-shown.length;
- return `<div class="ld-give"><span class="ld-give-t">${ic('download','xs')}Descargar</span><button class="ld-chip main" data-action="ld-dl-zip" title="Todo el proyecto en un ZIP: ${paths.length} archivos, ${ldKb(total)}">${ic('download','xs')}ZIP<span>${paths.length} archivo${paths.length>1?'s':''} · ${ldKb(total)}</span></button>${shown.map(f=>`<button class="ld-chip" data-action="ld-dl" data-path="${esc(f)}" title="Descargar ${esc(f)} · ${ldKb(ldSize(p.files[f]))}">${ic('file','xs')}<span>${esc(f.split('/').pop())}</span></button>`).join('')}${rest>0?`<span class="ld-secs">y ${rest} más en el ZIP</span>`:''}</div>`;
-}
 async function ldUpload(files){
  const p=LD.cur;if(!p)return;let n=0;
  for(const f of files){const path=ldPath((f.webkitRelativePath||f.name));if(!path||f.size>2.5e6)continue;p.files[path]=LD_BIN.test(path)?await ldDataUrl(f,path):await f.text();n++;}
@@ -4648,7 +4587,7 @@ function ldMsgHTML(m,i,p){
   foot=`<div class="ld-foot">${ch.length?`<button class="ld-chip" data-action="ld-review" data-i="${i}">${ic('edit','xs')}${ch.length} archivo${ch.length>1?'s':''} cambiado${ch.length>1?'s':''}<span>Revisar</span></button>`:''}${m.undone?'<span class="ld-secs">Deshecho</span>':''}<span class="grow"></span>${m.tok?`<span class="ld-secs" title="Lee ${fmtTok(m.tok.in)} (${fmtTok(m.tok.cached)} reutilizados de la caché) y escribe ${fmtTok(m.tok.out)}">${fmtTok(m.tok.in+m.tok.out)} tokens</span>`:''}${m.secs?`<span class="ld-secs">${m.secs<60?m.secs+' s':Math.round(m.secs/60)+' min'}</span>`:''}${canUndo?`<button class="act" data-action="ld-undo" data-i="${i}" title="Deshacer los cambios de esta tarea" aria-label="Deshacer los cambios de esta tarea">${ic('undo','sm')}</button>`:''}<button class="act" data-action="ld-copy" data-i="${i}" aria-label="Copiar respuesta">${ic('copy','sm')}</button></div>`;
  }
  if(m.plan&&!m.running&&!m.error&&!m.stopped&&i===p.chat.length-1&&ldMode()==='plan')body+=`<div class="ld-planok"><button class="btn sm primary" data-action="ld-approve-plan">${ic('check','xs')}Aprobar el plan y ejecutar</button><span>o escribe qué cambiar del plan</span></div>`;
-  return `<div class="msg bot ld-bot">${body}${ldGiveHTML(m,p)}${foot}</div>`;
+ return `<div class="msg bot ld-bot">${body}${foot}</div>`;
 }
 function ldThreadHTML(p){
  if(!p.chat.length)return `<div class="ld-empty"><span class="ld-hero-ic">${ic('code','lg')}</span><h2>${esc(p.name)}</h2><p>${MODEL_NAME} Dev lee tu proyecto, hace los cambios, los ejecuta y revisa la vista previa hasta que funcione. Escribe <kbd>/</kbd> para comandos y <kbd>@</kbd> para nombrar un archivo.</p><div class="ld-sugs">${(Object.keys(p.files).length?['Explícame cómo está hecho este proyecto','Busca errores y arréglalos','Hazlo responsive y más bonito','Agrega modo oscuro']:['Una tienda con carrito de compras','Una calculadora de presupuesto en bolívares y dólares','Un juego de memoria con cartas','Un script de Python que analice un CSV']).map(s=>`<button class="ld-sug" data-action="ld-sug" data-val="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>`;
@@ -4750,13 +4689,13 @@ function ldChangesHTML(p){
   return `<div class="ld-rv"><button class="ld-rv-h" data-action="ld-rv" data-k="${key}" data-open="${open}" aria-expanded="${open}">${ic('chevr','xs chev-rot')}<span class="t">${esc(f)}</span><span class="ld-tag ${kind}">${kind}</span>${d?`<span class="ld-pm"><b class="add">+${d.add}</b><b class="del">−${d.del}</b></span>`:''}</button>${open?(d?ldDiffHTML(d):'<p class="ld-none">Archivo binario.</p>'):''}</div>`;
  }).join('');
  const tasks=p.chat.map((x,k)=>[x,k]).filter(([x])=>x.role==='bot'&&(x.changed||[]).length);
- return `<div class="ld-cbar">${tasks.length>1?`<select class="input ld-psel" id="ld-rvsel" aria-label="Tarea">${tasks.map(([x,k])=>`<option value="${k}" ${k===i?'selected':''}>${esc(clip((p.chat[k-1]||{}).text||((p.chat[k-1]||{}).cmd?'/'+p.chat[k-1].cmd:'Tarea'),70))}${x.undone?' (deshecha)':''}</option>`).join('')}</select>`:`<span class="t">${esc(clip(ask?(ask.text||(ask.cmd?'/'+ask.cmd:'')):'Cambios',80))}</span>`}<span class="grow"></span>${m.undone?'<span class="ld-secs">Deshecho</span>':cp?`<button class="btn sm" data-action="ld-undo" data-i="${i}">${ic('undo','xs')}Deshacer</button>`:''}</div><div class="ld-rvs scroll">${cp?'':'<p class="ld-none">El punto de restauración de esta tarea ya no está guardado; se muestran los archivos como están ahora.</p>'}${rows}</div>`;
+ return `<div class="ld-cbar">${tasks.length>1?`<select class="input ld-psel" id="ld-rvsel" aria-label="Tarea">${tasks.map(([x,k])=>`<option value="${k}" ${k===i?'selected':''}>${esc(clip((p.chat[k-1]||{}).text||((p.chat[k-1]||{}).cmd?'/'+p.chat[k-1].cmd:'Tarea'),70))}${x.undone?' (deshecha)':''}</option>`).join('')}</select>`:`<span class="t">${esc(clip(ask?(ask.text||(ask.cmd?'/'+ask.cmd:'')):'Cambios',80))}</span>`}<span class="grow"></span>${m.undone?'<span class="ld-secs">Deshecho</span>':cp?`<button class="btn sm" data-action="ld-undo" data-i="${i}">${ic('undo','xs')}Deshacer</button>`:''}<button class="btn sm" data-action="ld-dl-changes" data-i="${i}" title="Descargar solo los archivos que cambió esta tarea">${ic('download','xs')}ZIP</button></div><div class="ld-rvs scroll">${cp?'':'<p class="ld-none">El punto de restauración de esta tarea ya no está guardado; se muestran los archivos como están ahora.</p>'}${rows}</div>`;
 }
 function ldHomeHTML(){
  const cards=LD.projects.map(p=>{const n=Object.keys(p.files).length;return `<div class="ld-card"><button class="ld-card-b" data-action="ld-project" data-id="${p.id}"><span class="ld-card-ic">${ic('code')}</span><span class="ld-card-t"><b>${esc(p.name)}</b><span>${n} archivo${n===1?'':'s'} · ${esc(rel(p.updated))}</span></span></button><button class="icon-btn" data-action="ld-project-menu" data-id="${p.id}" aria-label="Opciones de ${esc(p.name)}">${ic('dots','sm')}</button></div>`;}).join('');
  return `<div class="ld-home scroll gutter"><div class="ld-home-in">
   <div class="ld-hero"><span class="ld-hero-ic">${ic('code','lg')}</span><h1>Liminal Dev</h1><p>${MODEL_NAME} programa dentro de tu proyecto, como un desarrollador con acceso a tu código: lo lee, hace cambios precisos, lo ejecuta y revisa la vista previa hasta que funciona. Todo se guarda en este dispositivo.</p>
-   <div class="ld-acts"><button class="btn primary" data-action="ld-new">${ic('plus','sm')}Nuevo proyecto</button><button class="btn" data-action="ld-import-zip">${ic('upload','sm')}Importar ZIP</button><button class="btn" data-action="ld-import-gh">${ic('github','sm')}Desde GitHub</button></div></div>
+   <div class="ld-acts"><button class="btn primary" data-action="ld-new">${ic('plus','sm')}Nuevo proyecto</button><button class="btn" data-action="ld-import-zip">${ic('upload','sm')}Importar ZIP (uno o varios)</button><button class="btn" data-action="ld-import-gh">${ic('github','sm')}Desde GitHub</button></div></div>
   ${apiReady()?'':`<div class="notice">${ic('spark')}<div><b>Modo demostración</b><span>Sin servidor conectado, ${MODEL_NAME} Dev sigue un guion de ejemplo (pero crea y prueba archivos de verdad). Conecta el servidor en Administración para que programe lo que le pidas.</span></div></div>`}
   ${cards?`<h2 class="ld-h2">Recientes</h2><div class="ld-cards">${cards}</div>`:''}
  </div></div>`;
@@ -4911,7 +4850,7 @@ function ldSideHTML(){
  </nav>`;
 }
 function ldProjectMenu(id){const p=LD.projects.find(x=>x.id===id);if(!p)return '';return `${item('ld-rename',id,'edit','Renombrar')}${item('ld-export',id,'download','Exportar ZIP')}${p.chat.length?item('ld-clear-chat',id,'refresh','Limpiar la conversación'):''}<div class="menu-sep"></div>${item('ld-delete',id,'trash','Borrar proyecto','danger')}`;}
-function ldFileMenu(path){const e=esc(path);return `<button class="menu-opt" role="menuitem" data-action="ld-rename-file" data-path="${e}">${ic('edit')}<span class="mo-t"><b>Renombrar o mover</b></span></button><button class="menu-opt" role="menuitem" data-action="ld-ask-about" data-path="${e}">${ic('spark')}<span class="mo-t"><b>Preguntar a ${MODEL_NAME} Dev</b></span></button><div class="menu-sep"></div><button class="menu-opt danger" role="menuitem" data-action="ld-delete-file" data-path="${e}">${ic('trash')}<span class="mo-t"><b>Borrar</b></span></button>`;}
+function ldFileMenu(path){const e=esc(path),dir=path.includes('/')?path.slice(0,path.lastIndexOf('/')):'';return `<button class="menu-opt" role="menuitem" data-action="ld-dl-file" data-path="${e}">${ic('download')}<span class="mo-t"><b>Descargar</b></span></button>${dir?`<button class="menu-opt" role="menuitem" data-action="ld-dl-folder" data-path="${e}">${ic('folder')}<span class="mo-t"><b>Descargar la carpeta «${esc(dir.split('/').pop())}»</b><span>ZIP</span></span></button>`:''}<button class="menu-opt" role="menuitem" data-action="ld-rename-file" data-path="${e}">${ic('edit')}<span class="mo-t"><b>Renombrar o mover</b></span></button><button class="menu-opt" role="menuitem" data-action="ld-ask-about" data-path="${e}">${ic('spark')}<span class="mo-t"><b>Preguntar a ${MODEL_NAME} Dev</b></span></button><div class="menu-sep"></div><button class="menu-opt danger" role="menuitem" data-action="ld-delete-file" data-path="${e}">${ic('trash')}<span class="mo-t"><b>Borrar</b></span></button>`;}
 function ldFormModal(title,form,fields,ok,extra){
  modal(`${head(title)}<form data-form="${form}" ${extra||''}><div class="modal-body">${fields}</div><div class="modal-foot"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button class="btn primary">${ok}</button></div></form>`,{label:title,onOpen:()=>{const i=$('.modal input');if(i){i.focus();i.select();}}});
 }
@@ -4960,13 +4899,16 @@ Object.assign(A,{
  'ld-review':el=>{LD.review=+el.dataset.i;LD.side='changes';if(ldNarrow())LD.tab='work';renderDev();},
  'ld-rv':el=>{LD.show[el.dataset.k]=el.dataset.open!=='true';const b=$('#ld-wbody');if(b&&LD.cur){const top=($('.ld-rvs')||{}).scrollTop||0;b.innerHTML=ldChangesHTML(LD.cur);const r=$('.ld-rvs');if(r)r.scrollTop=top;}},
  'ld-new':()=>ldNewProjectModal(),
- 'ld-import-zip':()=>{const i=document.createElement('input');i.type='file';i.accept='.zip,application/zip';i.onchange=()=>{if(i.files[0])ldImportZip(i.files[0]);};i.click();},
+ 'ld-import-zip':()=>{const i=document.createElement('input');i.type='file';i.multiple=true;i.accept='.zip,application/zip';i.onchange=()=>{if(i.files.length)ldImportZips([...i.files]);};i.click();},
+ 'ld-dl-file':el=>{closePop();ldDownloadFile(el.dataset.path);},
+ 'ld-dl-folder':el=>{closePop();ldDownloadFolder(el.dataset.path);},
+ 'ld-dl-changes':el=>ldDownloadChanges(+el.dataset.i),
+ 'ld-rewind':()=>{if(LD.cur)ldRewind(LD.cur);},
+ 'ld-rewind-to':el=>ldRewindTo(el.dataset.id),
  'ld-import-gh':()=>ldFormModal('Importar de GitHub','ld-gh',`<div class="field"><label for="ld-gh">Enlace del repositorio público</label><input class="input" id="ld-gh" name="v" required autocomplete="off" placeholder="github.com/usuario/proyecto"></div><p class="ld-hint">Se copian hasta 300 archivos de código a este dispositivo. Los cambios no se suben a GitHub; exporta un ZIP cuando quieras.</p>`,'Importar'),
  'ld-project-menu':el=>openPop(el,'ldp:'+el.dataset.id,ldProjectMenu(el.dataset.id)),
  'ld-rename':el=>{closePop();const p=LD.projects.find(x=>x.id===el.dataset.id);if(p)ldFormModal('Renombrar proyecto','ld-rename',`<div class="field"><label for="ld-rn">Nombre</label><input class="input" id="ld-rn" name="v" value="${esc(p.name)}" required maxlength="60" autocomplete="off"></div>`,'Guardar',`data-id="${p.id}"`);},
  'ld-export':el=>{closePop();const p=LD.projects.find(x=>x.id===el.dataset.id);if(p)ldExport(p);},
- 'ld-dl-zip':()=>{if(LD.cur)ldExport(LD.cur);},
- 'ld-dl':el=>ldDownloadPath(el.dataset.path),
  'ld-clear-chat':el=>{closePop();const p=LD.projects.find(x=>x.id===el.dataset.id);if(!p||LD.running)return;confirmModal({title:'¿Limpiar la conversación?',body:'Los archivos se quedan como están. Se borran los mensajes y los puntos para deshacer.',ok:'Limpiar',fn:()=>{p.chat=[];p.checkpoints=[];p.todo=[];ldSave(p,true);renderDev();}});},
  'ld-delete':el=>{closePop();const p=LD.projects.find(x=>x.id===el.dataset.id);if(!p)return;if(LD.running&&LD.cur===p){toast('Detén la tarea antes de borrar el proyecto.');return;}confirmModal({title:`¿Borrar «${esc(p.name)}»?`,body:'Se borran sus archivos de este dispositivo. Si quieres conservarlos, exporta un ZIP antes.',ok:'Borrar',fn:()=>{LD.projects=LD.projects.filter(x=>x!==p);ldRemove(p.id);if(LD.cur===p)LD.cur=null;renderDev();renderTopbar();renderSidebar();toast('Proyecto borrado');}});},
  'ld-sug':el=>ldSend(el.dataset.val),
@@ -4985,7 +4927,7 @@ Object.assign(A,{
  'ld-dir':el=>{const d=el.dataset.path;LD.closed[d]=!LD.closed[d];const t=$('#ld-tree');if(t&&LD.cur)t.innerHTML=ldTreeHTML(LD.cur);},
  'ld-file-menu':el=>openPop(el,'ldf:'+el.dataset.path,ldFileMenu(el.dataset.path)),
  'ld-new-file':()=>ldFormModal('Nuevo archivo','ld-newfile',`<div class="field"><label for="ld-nf">Ruta</label><input class="input" id="ld-nf" name="v" required maxlength="240" autocomplete="off" placeholder="js/app.js"></div>`,'Crear'),
- 'ld-upload':()=>{const i=document.createElement('input');i.type='file';i.multiple=true;i.onchange=()=>{if(i.files.length)ldUpload([...i.files]);};i.click();},
+ 'ld-upload':()=>{const i=document.createElement('input');i.type='file';i.multiple=true;i.onchange=()=>{if(i.files.length)ldAddToProject([...i.files]);};i.click();},
  'ld-rename-file':el=>{closePop();const f=el.dataset.path;ldFormModal('Renombrar o mover','ld-renamefile',`<div class="field"><label for="ld-rf">Ruta nueva</label><input class="input" id="ld-rf" name="v" value="${esc(f)}" required maxlength="240" autocomplete="off"></div>`,'Guardar',`data-path="${esc(f)}"`);},
  'ld-delete-file':el=>{closePop();const f=el.dataset.path,p=LD.cur;if(!p)return;confirmModal({title:`¿Borrar ${esc(f)}?`,body:'Puedes recuperarlo deshaciendo la última tarea de Lithium, si fue antes de borrarlo.',ok:'Borrar',fn:()=>{delete p.files[f];LD.open=LD.open.filter(x=>x!==f);if(LD.file===f)LD.file=LD.open[0]||null;ldSave(p,true);renderDev();}});},
  'ld-ask-about':el=>{closePop();LD.draft=`Explícame qué hace ${el.dataset.path} y si tiene algún problema.`;LD.tab='agent';renderDev();const t=$('#ld-prompt');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}},
